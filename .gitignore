@@ -1,4 +1,10 @@
 # Python and packaging
+/AGENTS.md
+/CLAUDE.md
+/GIT_WORKFLOW.md
+/IMPLEMENTATION_PLAN.md
+/MODULE_4_ASSIGNMENT_INSTRUCTIONS.md
+/MODULE_4_ASSIGNMENT_QUESTIONS.md
 .venv/
 venv/
 __pycache__/
