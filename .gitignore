@@ -1,0 +1,38 @@
+# Python and packaging
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Streamlit and operating-system files
+.streamlit/
+.DS_Store
+
+# User data and optional model artifacts. Keep directory placeholders tracked.
+data/rgb/*
+data/thermal/*
+data/reference/*
+!data/rgb/.gitkeep
+!data/thermal/.gitkeep
+!data/reference/.gitkeep
+*.pt
+*.pth
+*.onnx
+
+# Generated result and report artifacts. Keep directory placeholders tracked.
+results/rgb/*
+results/thermal/*
+results/comparisons/*
+results/metrics/*
+docs/report/figures/*
+!results/rgb/.gitkeep
+!results/thermal/.gitkeep
+!results/comparisons/.gitkeep
+!results/metrics/.gitkeep
+!docs/report/figures/.gitkeep
