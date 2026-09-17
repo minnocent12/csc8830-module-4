@@ -9,30 +9,55 @@ dist/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
 
 # Streamlit and operating-system files
 .streamlit/
+.streamlit/secrets.toml
 .DS_Store
 
+# IDE, editor, temporary, and local environment files
+.idea/
+.vscode/
+.env
+.env.*
+!.env.example
+tmp/
+temp/
+*.tmp
+*.swp
+*.swo
+*~
+
 # User data and optional model artifacts. Keep directory placeholders tracked.
-data/rgb/*
-data/thermal/*
-data/reference/*
+data/rgb/**
+data/thermal/**
+data/reference/**
 !data/rgb/.gitkeep
 !data/thermal/.gitkeep
 !data/reference/.gitkeep
 *.pt
 *.pth
 *.onnx
+*.ckpt
+*.safetensors
 
 # Generated result and report artifacts. Keep directory placeholders tracked.
-results/rgb/*
-results/thermal/*
-results/comparisons/*
-results/metrics/*
-docs/report/figures/*
+results/rgb/**
+results/thermal/**
+results/comparisons/**
+results/metrics/**
+docs/report/figures/**
 !results/rgb/.gitkeep
 !results/thermal/.gitkeep
 !results/comparisons/.gitkeep
 !results/metrics/.gitkeep
 !docs/report/figures/.gitkeep
+
+# Preserve intentionally selected small report evidence, following Module 3 conventions.
+!results/metrics/*.csv
+!results/metrics/*.md
+!results/comparisons/*.md
+!docs/report/figures/*.png
