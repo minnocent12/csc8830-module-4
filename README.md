@@ -7,10 +7,9 @@ write-up covering Parts A-F.
 
 ## Current status
 
-Phase 1 establishes the independent package, safe image/mask conventions, data/result
-directories, page-provider contract, and pending-safe Streamlit navigation. RGB/thermal
-segmentation, SAM2 comparison, Fourier theory, and empirical results are scheduled for later
-approved phases. No results or reference masks are fabricated.
+Phase 2 implements the ROI-assisted classical RGB pipeline and its Streamlit page. Thermal
+segmentation, SAM2 comparison, metrics, Fourier theory, and empirical results are scheduled for
+later approved phases. No results or reference masks are fabricated.
 
 ## Setup
 
@@ -29,12 +28,14 @@ From this repository root:
 
     streamlit run app.py
 
-The current foundation exposes four pending-safe pages:
+The current app exposes four pages:
 
-- RGB Human Boundary
+- RGB Human Boundary (Phase 2 implemented)
 - Thermal Human Boundary
 - Comparison and Evaluation
 - Fourier Theory
+
+Only the RGB page performs processing in this phase. The other pages remain pending-safe.
 
 The standalone app does not require SAM2.
 

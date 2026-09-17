@@ -3,6 +3,8 @@ from __future__ import annotations
 
 import streamlit as st
 
+IMAGE_TYPES = ["jpg", "jpeg", "png", "bmp", "tif", "tiff"]
+
 
 def pending_experiment_banner(detail: str | None = None) -> None:
     """Display an honest notice for work that needs later implementation or user data."""
