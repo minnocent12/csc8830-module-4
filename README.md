@@ -9,10 +9,10 @@ write-up covering Parts A-F.
 
 Phase 2 implements the ROI-assisted classical RGB pipeline, Phase 3 implements the classical
 thermal pipeline with dual-polarity Otsu segmentation, Phase 4 implements strict reference
-validation and pixel-level evaluation, and Phase 5 implements an isolated optional official SAM2
-reference adapter plus comparison workflow. SAM2 empirical inference, Fourier theory, and real
-empirical results remain pending user setup and later approved phases. No results or reference
-masks are fabricated.
+validation and pixel-level evaluation, Phase 5 implements an isolated optional official SAM2
+reference adapter plus comparison workflow, and Phase 6 implements the Fourier Parts A–F theory
+and deterministic educational demonstrations. Real SAM2 inference, RGB/thermal experiments, and
+final empirical results remain pending user setup. No results or reference masks are fabricated.
 
 ## Setup
 
@@ -39,8 +39,9 @@ The current app exposes four pages:
 - Fourier Theory
 
 The RGB and Thermal pages perform classical processing. Comparison and Evaluation runs one
-classical pipeline and evaluates an explicitly uploaded reference; Fourier Theory remains
-pending-safe.
+classical pipeline and evaluates an explicitly uploaded reference. Fourier Theory teaches Parts
+A–F and supports uploaded scalar-image or deterministic synthetic demonstrations.
+The canonical written theory is [docs/FOURIER_THEORY.md](docs/FOURIER_THEORY.md).
 
 The standalone app does not require SAM2.
 
@@ -58,8 +59,9 @@ status are documented in [docs/SAM2_COMPARISON.md](docs/SAM2_COMPARISON.md).
     python -m pytest -q
 
 Tests cover image validation, BGR/unchanged decoding, canonical boolean masks, RGB and thermal
-pipeline behavior, strict evaluation metrics and alignment, typed experiment records, metadata,
-and the dashboard-compatible page-provider contract. They do not count as experimental validation.
+pipeline behavior, strict evaluation metrics and alignment, typed experiment records, Fourier
+reconstruction/filter/derivative/Laplacian/local-frequency behavior, metadata, and the
+dashboard-compatible page-provider contract. They do not count as experimental validation.
 
 ## Planned reproduction workflow
 
@@ -86,7 +88,7 @@ collection.
 
     app.py
     src/module4/
-      core CV, reference adapter, and theory modules
+      core CV, reference adapter, Fourier helpers, and theory modules
       webapp/             PageSpec provider and Streamlit UI
     data/                 user or verified sample inputs
     results/              derived masks, overlays, comparisons, and metrics

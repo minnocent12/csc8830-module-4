@@ -3,8 +3,20 @@ from __future__ import annotations
 
 import os
 
+import cv2
+import numpy as np
 import streamlit as st
 
+from module4.fourier import (
+    apply_frequency_filter,
+    compute_fft2,
+    frequency_derivative,
+    frequency_laplacian,
+    gaussian_high_pass,
+    gaussian_low_pass,
+    local_frequency_energy,
+    magnitude_spectrum,
+)
 from module4.io_utils import decode_image_bgr, decode_image_unchanged
 from module4.metrics import evaluate_masks
 from module4.reference import (
@@ -28,7 +40,7 @@ from module4.validation import (
     prepare_reference,
 )
 from module4.webapp._page import PageSpec
-from module4.webapp.ui import IMAGE_TYPES, foundation_page, pending_experiment_banner
+from module4.webapp.ui import IMAGE_TYPES, pending_experiment_banner
 from module4.visualization import bgr_to_rgb, display_mask, mask_overlap_bgr, to_display_uint8
 
 _MODULE = "Module 4"
@@ -256,8 +268,8 @@ def _thermal_page() -> None:
         st.warning(warning)
     st.caption(
         "Use Comparison and Evaluation to upload a reference and compute validated pixel-level "
-        "metrics. SAM2, Fourier theory, and empirical RGB-versus-thermal conclusions remain "
-        "pending later approved phases and real data."
+        "metrics. SAM2 inference and empirical RGB-versus-thermal conclusions remain pending "
+        "real data. Fourier theory is available on the Fourier Theory page."
     )
 
 
@@ -366,6 +378,35 @@ def _show_metrics(result_mask, reference_mask, *, reference_label: str, alignmen
         column.metric(label, f"{value:.4f}")
     st.write(f"TP: **{metrics.tp}** | FP: **{metrics.fp}** | FN: **{metrics.fn}** | TN: **{metrics.tn}**")
     return metrics
+
+
+def _fourier_display(values: np.ndarray, *, signed: bool = False) -> np.ndarray:
+    """Scale a finite scalar array for display without changing Fourier computations."""
+    if not isinstance(values, np.ndarray) or values.ndim != 2:
+        raise ValueError("Fourier display values must be a 2D array")
+    if not np.isfinite(values).all():
+        raise ValueError("Fourier display values must be finite")
+    values_float = values.astype(np.float64, copy=False)
+    if signed:
+        maximum = float(np.max(np.abs(values_float)))
+        if maximum == 0:
+            return np.zeros(values.shape, dtype=np.uint8)
+        return np.clip((values_float / maximum + 1.0) * 127.5, 0, 255).astype(np.uint8)
+    minimum = float(np.min(values_float))
+    maximum = float(np.max(values_float))
+    if maximum == minimum:
+        return np.zeros(values.shape, dtype=np.uint8)
+    return np.clip(np.rint((values_float - minimum) * 255.0 / (maximum - minimum)), 0, 255).astype(np.uint8)
+
+
+def _synthetic_fourier_example() -> np.ndarray:
+    """Create a deterministic smooth/striped educational scalar image for Part F."""
+    rows, columns = 128, 192
+    x = np.arange(columns, dtype=np.float64)
+    smooth = 0.25 + 0.45 * (x[: columns // 2] / max(columns // 2 - 1, 1))
+    stripes = 0.25 + 0.65 * (np.sin(2.0 * np.pi * 0.20 * x[columns // 2 :]) > 0)
+    row = np.concatenate((smooth, stripes))
+    return np.repeat(row[None, :], rows, axis=0)
 
 
 def _comparison_page() -> None:
@@ -634,15 +675,176 @@ def _comparison_page() -> None:
     _show_metrics(result.final_mask, reference_mask, reference_label=reference_type.replace("_", " "), alignment=alignment)
     st.caption(
         "All metrics use aligned canonical masks. A reference is metadata/provenance input, not a "
-        "segmentation input; SAM2 is optional and Fourier processing remains out of scope for this phase."
+        "segmentation input; SAM2 is optional and Fourier analysis is provided on its separate theory page."
     )
 
 
 def _theory_page() -> None:
-    foundation_page(
-        "Fourier Theory",
-        "The Parts A-F Fourier-domain derivation and optional demonstrations will be added in a "
-        "later approved phase.",
+    st.header("Question 3 — Fourier-Domain Edge Detection and Region Segmentation")
+    st.info(
+        "This page teaches Parts A–F and provides deterministic educational demonstrations. "
+        "Fourier responses are frequency-enhanced signals, not semantic human masks or empirical results."
+    )
+
+    st.subheader("Part A — 2D Fourier representation")
+    st.markdown(
+        "`f(x,y)` is the scalar spatial image; `F(u,v)` is its frequency representation. "
+        "Rows are the y axis and columns are the x axis. The implementation uses NumPy's "
+        "unnormalized forward FFT and normalized inverse FFT consistently."
+    )
+    st.latex(r"F(u,v)=\int\!\!\int f(x,y)e^{-j2\pi(ux+vy)}\,dx\,dy")
+    st.latex(r"f(x,y)=\int\!\!\int F(u,v)e^{j2\pi(ux+vy)}\,du\,dv")
+    st.latex(r"F[k,l]=\sum_{m=0}^{M-1}\sum_{n=0}^{N-1}f[m,n]e^{-j2\pi(km/M+ln/N)}")
+    st.latex(r"f[m,n]=\frac{1}{MN}\sum_{k=0}^{M-1}\sum_{l=0}^{N-1}F[k,l]e^{j2\pi(km/M+ln/N)}")
+    st.markdown(
+        "Low frequencies describe slowly varying intensity and broad structure. High frequencies "
+        "describe rapid changes, fine texture, sharp transitions, and noise. Magnitude is `|F|`; "
+        "phase is `angle(F)`. Both matter for exact reconstruction. `fftshift` moves zero frequency "
+        "to the display center; it changes layout only. The log magnitude below is display-only."
+    )
+
+    upload = st.file_uploader(
+        "Optional scalar-image demonstration input",
+        type=IMAGE_TYPES,
+        key="fourier_input",
+        help="RGB uploads are explicitly converted from OpenCV BGR to grayscale intensity.",
+    )
+    if upload is None:
+        scalar_image = _synthetic_fourier_example()
+        source_label = "Deterministic educational example"
+    else:
+        try:
+            source_bgr = decode_image_bgr(upload.getvalue(), source_name=upload.name)
+            scalar_image = cv2.cvtColor(source_bgr, cv2.COLOR_BGR2GRAY).astype(np.float64)
+            source_label = f"Uploaded image: {upload.name} (BGR → grayscale intensity)"
+        except (TypeError, ValueError) as exc:
+            st.error(f"Could not read the Fourier demonstration image: {exc}")
+            return
+    st.caption(f"{source_label}. Processing representation: finite float64 scalar intensity.")
+    st.image(_fourier_display(scalar_image), caption="Scalar image used for Fourier analysis", width="stretch")
+
+    spectrum_shifted = compute_fft2(scalar_image, shifted=True)
+    st.image(
+        _fourier_display(magnitude_spectrum(spectrum_shifted)),
+        caption="Centered log magnitude spectrum: log(1 + |F|)",
+        width="stretch",
+    )
+
+    st.subheader("Part B — Why edges are high frequency")
+    st.markdown(
+        "A constant region is dominated by DC/low frequency. A smooth gradient changes slowly. "
+        "A sharp step changes rapidly and requires a broad spectrum, including high frequencies. "
+        "High frequency is not exclusive to edges: noise, texture, detail, and compression artifacts "
+        "also contribute. Therefore a high-pass response is not automatically a binary edge map."
+    )
+    st.latex(r"G(u,v)=H(u,v)F(u,v),\qquad g(x,y)=\mathcal{F}^{-1}\{G(u,v)\}")
+
+    st.subheader("Part C — Gaussian high-pass filtering")
+    sigma = float(
+        st.slider(
+            "Gaussian low-pass sigma (cycles per pixel)",
+            min_value=0.01,
+            max_value=0.25,
+            value=0.08,
+            step=0.01,
+            key="fourier_sigma",
+        )
+    )
+    low_pass = gaussian_low_pass(scalar_image.shape, sigma=sigma, shifted=True)
+    high_pass = gaussian_high_pass(scalar_image.shape, sigma=sigma, shifted=True)
+    low_response = apply_frequency_filter(scalar_image, low_pass, shifted=True)
+    high_response = apply_frequency_filter(scalar_image, high_pass, shifted=True)
+    st.latex(r"H_{HP}(u,v)=1-H_{LP}(u,v)")
+    st.latex(r"G(u,v)=H_{HP}(u,v)F(u,v),\qquad g=\mathcal{F}^{-1}\{G\}")
+    c1, c2 = st.columns(2)
+    with c1:
+        st.image(_fourier_display(low_response), caption="Gaussian low-pass reconstruction", width="stretch")
+    with c2:
+        st.image(_fourier_display(high_response, signed=True), caption="Gaussian high-pass response", width="stretch")
+    st.caption("A Gaussian transition avoids the stronger ringing associated with an ideal hard cutoff.")
+
+    st.subheader("Part D — Fourier derivative property")
+    st.latex(r"\mathcal{F}\{\partial f/\partial x\}=j2\pi uF(u,v)")
+    st.latex(r"\mathcal{F}\{\partial f/\partial y\}=j2\pi vF(u,v)")
+    st.markdown(
+        "The x derivative multiplies each coefficient by a factor whose magnitude grows with |u|; "
+        "the y derivative does the same with |v|. This is the mathematical link between gradients, "
+        "edges, and high-frequency emphasis. The signs are preserved by reconstructing the complex "
+        "derivative spectrum rather than taking its magnitude."
+    )
+    derivative_x = frequency_derivative(scalar_image, axis="x")
+    derivative_y = frequency_derivative(scalar_image, axis="y")
+    c1, c2 = st.columns(2)
+    with c1:
+        st.image(_fourier_display(derivative_x, signed=True), caption="Fourier x derivative", width="stretch")
+    with c2:
+        st.image(_fourier_display(derivative_y, signed=True), caption="Fourier y derivative", width="stretch")
+
+    st.subheader("Part E — Frequency-domain Laplacian")
+    st.latex(r"\nabla^2f=\partial^2f/\partial x^2+\partial^2f/\partial y^2")
+    st.latex(r"\mathcal{F}\{\nabla^2f\}=-4\pi^2(u^2+v^2)F(u,v)")
+    st.markdown(
+        "The radial multiplier grows quadratically with frequency, enhancing fine detail and edges. "
+        "It also strongly amplifies high-frequency noise, so the Laplacian is an edge/detail operator, "
+        "not a complete segmentation method."
+    )
+    laplacian = frequency_laplacian(scalar_image)
+    st.image(_fourier_display(laplacian, signed=True), caption="Fourier-domain Laplacian response", width="stretch")
+
+    st.subheader("Part F — Fourier-domain region segmentation")
+    st.markdown(
+        "Frequency-selective segmentation can transform an image or window, isolate a radial or "
+        "directional band, measure selected-band energy, reconstruct a spatial response, and then "
+        "threshold or clean candidate regions. Smooth regions tend to concentrate energy at lower "
+        "frequencies; fine repeating textures can produce stronger high-frequency or directional energy."
+    )
+    st.latex(r"F_k(u,v)=\mathcal{F}\{f_k(x,y)\}")
+    st.markdown(
+        "A global Fourier transform reveals what frequencies occur but not directly where they occur. "
+        "Local/windowed analysis divides the image into windows, computes descriptors per window, and "
+        "assigns those values to a spatial map. Small windows improve localization but reduce frequency "
+        "resolution; large windows do the opposite."
+    )
+    window_size = int(
+        st.select_slider("Local analysis window size", options=[4, 8, 16, 32], value=8, key="fourier_window")
+    )
+    cutoff = float(
+        st.slider(
+            "Selected high-frequency cutoff (cycles per pixel)",
+            min_value=0.01,
+            max_value=0.45,
+            value=0.15,
+            step=0.01,
+            key="fourier_cutoff",
+        )
+    )
+    energy_map = local_frequency_energy(scalar_image, window_size=window_size, cutoff=cutoff)
+    threshold_fraction = float(
+        st.slider(
+            "Educational display threshold as fraction of maximum energy",
+            min_value=0.0,
+            max_value=1.0,
+            value=0.5,
+            step=0.05,
+            key="fourier_energy_threshold",
+        )
+    )
+    maximum_energy = float(np.max(energy_map))
+    region_map = energy_map >= maximum_energy * threshold_fraction if maximum_energy > 0 else np.zeros_like(energy_map, dtype=bool)
+    c1, c2 = st.columns(2)
+    with c1:
+        st.image(_fourier_display(energy_map), caption="Local high-frequency energy map", width="stretch")
+    with c2:
+        st.image(_fourier_display(region_map), caption="Thresholded educational frequency-region map", width="stretch")
+    st.caption(
+        "Synthetic educational demonstration when no upload is supplied; the local map is a classical "
+        "frequency descriptor, not a semantic segmentation result or empirical assignment measurement."
+    )
+    st.markdown(
+        "Advantages: interpretable frequency-band control, efficient FFT computation, and useful "
+        "periodic/directional texture analysis. Limitations: global localization loss, noise sensitivity, "
+        "ringing from hard cutoffs, boundary leakage, parameter dependence, and the spatial/frequency "
+        "resolution trade-off of local windows. Frequency content does not directly encode semantic objects."
     )
 
 

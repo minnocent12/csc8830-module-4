@@ -115,5 +115,8 @@ intentional and must not be replaced with plausible values.
 
 Phase 5 status: the isolated SAM2 reference integration and comparison workflow is implemented.
 Real checkpoint inference and empirical SAM2 comparison results remain pending until the user
-supplies the separate official environment, local checkpoint, and actual images. Phase 6 remains
-out of scope here; its only recommendation is the Fourier Parts A-F theory work.
+supplies the separate official environment, local checkpoint, and actual images. Phase 6 status:
+the Fourier Parts A-F theory and deterministic educational demonstrations are implemented
+separately in `docs/FOURIER_THEORY.md`, `src/module4/fourier.py`, and the Fourier Theory page.
+They are not empirical RGB/thermal results. Real SAM2 inference and RGB-versus-thermal
+experiments remain pending user data collection.
