@@ -69,3 +69,10 @@ docs/report/figures/**
 !results/metrics/*.md
 !results/comparisons/*.md
 !docs/report/figures/*.png
+
+# Phase 8 keeps only the small, derived evidence images and serialized records.
+!results/rgb/aau-vap-*.png
+!results/thermal/aau-vap-*.png
+!results/comparisons/aau-vap-*.png
+!results/metrics/phase8_*.json
+!results/metrics/phase8_*.csv

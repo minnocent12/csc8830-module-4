@@ -1,8 +1,45 @@
-# Phase 4 evaluation and experiment protocol
+# Phase 8 experimental results and protocol
 
-This document describes implemented evaluation infrastructure, not completed academic
-experiments. No input images, reference masks, metric values, timing values, or RGB-versus-thermal
-conclusions are included in the repository. The user must collect and verify those materials.
+This document records the controlled Phase 8 experiment run. Claims are classified explicitly:
+the runner and artifact exporter are **implemented**; the automated tests and artifact/metric
+consistency checks are **tested**; the six fixed AAU VAP cases below are **experimentally
+validated** only for this dataset subset and procedure; SAM2 inference is **pending user setup**.
+No generalization, timing, or RGB-versus-thermal superiority claim is made.
+
+## Dataset, provenance, and selection
+
+The experiment uses three predefined Scene 1 frame IDs from the AAU VAP Trimodal People
+Segmentation Dataset, version 3, acquired through the public Kaggle distribution. The dataset
+and its source are documented at [Kaggle](https://www.kaggle.com/datasets/aalborguniversity/trimodal-people-segmentation)
+and the [official AAU project page](https://vap.aau.dk/vap-trimodal-people-segmentation-dataset/).
+The listed dataset terms are CC BY 4.0. The cited source is Palmero et al. (2016),
+“Multi-modal RGB-Depth-Thermal Human Body Segmentation,” *International Journal of Computer
+Vision*, 118(2), 217–239.
+
+The deterministic selection rule was fixed before metric computation: use frame IDs **00085,
+00135, and 00185**, in ascending order, with both RGB and thermal modalities for each frame.
+No case was selected or excluded using a reference mask, metric, or score. The source-only ROIs
+are recorded in [`data/experiment_manifest.json`](../data/experiment_manifest.json). The raw
+downloaded files, derived binary references, and checkpoints remain ignored local data; only
+small derived evidence and serialized records are tracked.
+
+Thermal inputs are the dataset's three-channel false-color JPG representations. They are decoded
+as OpenCV BGR and converted to an intensity image for the existing classical thermal pipeline;
+they are not calibrated temperature arrays.
+
+## Phase 8 cases
+
+| Frame | RGB ROI (x, y, width, height) | Thermal ROI | Reference |
+|---|---|---|---|
+| 00085 | (120, 20, 450, 460) | (120, 20, 450, 460) | aligned dataset person mask |
+| 00135 | (80, 80, 350, 400) | (80, 80, 350, 400) | aligned dataset person mask |
+| 00185 | (50, 60, 350, 420) | (50, 60, 350, 420) | aligned dataset person mask |
+
+The dataset's person-label values were canonicalized as a derived binary reference: zero maps to
+background and any documented nonzero person label maps to foreground. The conversion metadata
+and source values are in the manifest. Classical processing completed before any reference was
+loaded, so the references could not influence prediction, polarity selection, or component
+selection.
 
 ## Evaluation contract
 
@@ -104,19 +141,54 @@ status only after the corresponding user data exists.
 6. Transfer only generated, traceable records into the final report. Automated tests validate
    implementation; they do not count as physical or empirical validation.
 
-## Empty report table
+## Re-running the experiment
 
-Populate this table only from generated records after the user experiment. Empty cells are
-intentional and must not be replaced with plausible values.
+Use the fixed manifest and evidence exporter from the repository root:
 
-| Image ID | Modality | Method | Reference type | Status | IoU | Dice | Precision | Recall | TP | FP | FN | TN | Notes |
-|---|---|---|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---|
-| pending user data | RGB/Thermal | classical pipeline | pending | pending |  |  |  |  |  |  |  |  |  |
+```text
+python scripts/run_phase8_evidence.py \
+  --manifest data/experiment_manifest.json \
+  --project-root . \
+  --output-dir results
+```
 
-Phase 5 status: the isolated SAM2 reference integration and comparison workflow is implemented.
-Real checkpoint inference and empirical SAM2 comparison results remain pending until the user
-supplies the separate official environment, local checkpoint, and actual images. Phase 6 status:
-the Fourier Parts A-F theory and deterministic educational demonstrations are implemented
-separately in `docs/FOURIER_THEORY.md`, `src/module4/fourier.py`, and the Fourier Theory page.
-They are not empirical RGB/thermal results. Real SAM2 inference and RGB-versus-thermal
-experiments remain pending user data collection.
+The manifest records an independent `rng_seed` for each case because the existing GrabCut
+operation uses OpenCV RNG internally. The exporter applies that seed before each invocation and
+then verifies that the exported masks produce the same metrics and confusion counts serialized by
+the runner.
+
+## Generated Phase 8 evidence
+
+The serialized records and generated summary are authoritative for the values below:
+
+- [`results/metrics/phase8_experiment_records.json`](../results/metrics/phase8_experiment_records.json)
+- [`results/metrics/phase8_experiment_records.csv`](../results/metrics/phase8_experiment_records.csv)
+- [`results/metrics/phase8_experiment_summary.md`](../results/metrics/phase8_experiment_summary.md)
+- [`results/metrics/phase8_artifacts.json`](../results/metrics/phase8_artifacts.json)
+- per-case masks, boundary overlays, thermal intermediates, references, and TP/FP/FN overlays
+  under [`results/`](../results/)
+
+The summary table is generated by `scripts/run_phase8_evidence.py`; it is not manually entered.
+The same script re-evaluates each exported mask against its canonical reference and asserts that
+all four metrics and four confusion counts match the runner record.
+
+## Observations from this fixed subset
+
+The RGB pipeline completed on all three cases with no pipeline warnings. The thermal pipeline
+selected the dark polarity on all three cases and emitted the documented false-color/intensity
+warning plus a border-touching-component caution on each case. These are observations of the
+stored records, not broad performance claims. The summary's descriptive means are provided only
+to describe this N=3 subset; they should not be reported as dataset-wide estimates.
+
+## SAM2 status
+
+The official SAM2 source is [facebookresearch/sam2](https://github.com/facebookresearch/sam2).
+Phase 8 verified that this local Python 3.13 environment has neither PyTorch nor the official
+`sam2` package, and no official checkpoint is present. The official runtime was therefore blocked
+before inference; no SAM2 mask, score, timing value, or metric is claimed. Checkpoints remain
+outside the repository. A future run may use only the official implementation and record its
+model/config/checkpoint/device/prompt provenance separately as a `sam2_reference`.
+
+Phase 5's isolated SAM2 adapter, Phase 6's Fourier Parts A–F theory, and Phase 7's Streamlit
+integration remain implemented/tested components. They are not substitutes for Phase 8's real
+SAM2 comparison or for a final academic report.

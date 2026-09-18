@@ -1,0 +1,438 @@
+[
+  {
+    "alignment": {
+      "destination_dimensions": [
+        480,
+        640
+      ],
+      "interpolation": "not_applicable",
+      "occurred": false,
+      "original_dimensions": [
+        480,
+        640
+      ],
+      "transformation": "none"
+    },
+    "classical_status": "completed",
+    "dice": 0.6572604502718647,
+    "fn": 342,
+    "fp": 79019,
+    "image_id": "aau-vap-scene1-frame-00085",
+    "iou": 0.4894921359879065,
+    "method": "classical_rgb_grabcut",
+    "modality": "rgb",
+    "precision": 0.4905713898899512,
+    "prediction_foreground_pixels": 155113,
+    "processing_parameters": {
+      "closing_kernel_size": 5,
+      "contour_thickness": 2,
+      "grabcut_iterations": 5,
+      "minimum_component_area": 16,
+      "opening_kernel_size": 3,
+      "rng_seed": 740948455
+    },
+    "recall": 0.9955256685331519,
+    "reference_dimensions": [
+      480,
+      640
+    ],
+    "reference_foreground_pixels": 76436,
+    "reference_image": "data/reference/aau_vap_scene1_00085_rgb_mask_binary.png",
+    "reference_metadata": {
+      "canonicalization": "nonzero dataset person labels mapped to 255; zero mapped to 0",
+      "source_mask": "data/reference/aau_vap_scene1_00085_rgb_mask.png",
+      "source_values": [
+        0,
+        200,
+        201,
+        202
+      ]
+    },
+    "reference_status": "available",
+    "reference_type": "ground_truth",
+    "roi": [
+      120,
+      20,
+      450,
+      460
+    ],
+    "selected_polarity": null,
+    "source_dimensions": [
+      480,
+      640
+    ],
+    "source_dtype": "uint8",
+    "source_image": "data/rgb/aau_vap_scene1_00085.jpg",
+    "status": "completed",
+    "tn": 151745,
+    "tp": 76094,
+    "warnings": []
+  },
+  {
+    "alignment": {
+      "destination_dimensions": [
+        480,
+        640
+      ],
+      "interpolation": "not_applicable",
+      "occurred": false,
+      "original_dimensions": [
+        480,
+        640
+      ],
+      "transformation": "none"
+    },
+    "classical_status": "completed",
+    "dice": 0.5301293537222945,
+    "fn": 7386,
+    "fp": 50043,
+    "image_id": "aau-vap-scene1-frame-00135",
+    "iou": 0.3606639503039209,
+    "method": "classical_rgb_grabcut",
+    "modality": "rgb",
+    "precision": 0.3929767103347889,
+    "prediction_foreground_pixels": 82440,
+    "processing_parameters": {
+      "closing_kernel_size": 5,
+      "contour_thickness": 2,
+      "grabcut_iterations": 5,
+      "minimum_component_area": 16,
+      "opening_kernel_size": 3,
+      "rng_seed": 972725737
+    },
+    "recall": 0.814342809742855,
+    "reference_dimensions": [
+      480,
+      640
+    ],
+    "reference_foreground_pixels": 39783,
+    "reference_image": "data/reference/aau_vap_scene1_00135_rgb_mask_binary.png",
+    "reference_metadata": {
+      "canonicalization": "nonzero dataset person labels mapped to 255; zero mapped to 0",
+      "source_mask": "data/reference/aau_vap_scene1_00135_rgb_mask.png",
+      "source_values": [
+        0,
+        200,
+        201
+      ]
+    },
+    "reference_status": "available",
+    "reference_type": "ground_truth",
+    "roi": [
+      80,
+      80,
+      350,
+      400
+    ],
+    "selected_polarity": null,
+    "source_dimensions": [
+      480,
+      640
+    ],
+    "source_dtype": "uint8",
+    "source_image": "data/rgb/aau_vap_scene1_00135.jpg",
+    "status": "completed",
+    "tn": 217374,
+    "tp": 32397,
+    "warnings": []
+  },
+  {
+    "alignment": {
+      "destination_dimensions": [
+        480,
+        640
+      ],
+      "interpolation": "not_applicable",
+      "occurred": false,
+      "original_dimensions": [
+        480,
+        640
+      ],
+      "transformation": "none"
+    },
+    "classical_status": "completed",
+    "dice": 0.5898853716877388,
+    "fn": 852,
+    "fp": 51956,
+    "image_id": "aau-vap-scene1-frame-00185",
+    "iou": 0.4183244112528363,
+    "method": "classical_rgb_grabcut",
+    "modality": "rgb",
+    "precision": 0.4222874552449574,
+    "prediction_foreground_pixels": 89934,
+    "processing_parameters": {
+      "closing_kernel_size": 5,
+      "contour_thickness": 2,
+      "grabcut_iterations": 5,
+      "minimum_component_area": 16,
+      "opening_kernel_size": 3,
+      "rng_seed": 817123909
+    },
+    "recall": 0.9780582024208087,
+    "reference_dimensions": [
+      480,
+      640
+    ],
+    "reference_foreground_pixels": 38830,
+    "reference_image": "data/reference/aau_vap_scene1_00185_rgb_mask_binary.png",
+    "reference_metadata": {
+      "canonicalization": "nonzero dataset person labels mapped to 255; zero mapped to 0",
+      "source_mask": "data/reference/aau_vap_scene1_00185_rgb_mask.png",
+      "source_values": [
+        0,
+        200,
+        201
+      ]
+    },
+    "reference_status": "available",
+    "reference_type": "ground_truth",
+    "roi": [
+      50,
+      60,
+      350,
+      420
+    ],
+    "selected_polarity": null,
+    "source_dimensions": [
+      480,
+      640
+    ],
+    "source_dtype": "uint8",
+    "source_image": "data/rgb/aau_vap_scene1_00185.jpg",
+    "status": "completed",
+    "tn": 216414,
+    "tp": 37978,
+    "warnings": []
+  },
+  {
+    "alignment": {
+      "destination_dimensions": [
+        480,
+        640
+      ],
+      "interpolation": "not_applicable",
+      "occurred": false,
+      "original_dimensions": [
+        480,
+        640
+      ],
+      "transformation": "none"
+    },
+    "classical_status": "completed",
+    "dice": 0.08000355298040394,
+    "fn": 66371,
+    "fp": 202923,
+    "image_id": "aau-vap-scene1-frame-00085",
+    "iou": 0.04166859428547026,
+    "method": "classical_thermal_otsu",
+    "modality": "thermal",
+    "precision": 0.054553840992955384,
+    "prediction_foreground_pixels": 214632,
+    "processing_parameters": {
+      "bright_otsu_threshold": 98.0,
+      "closing_kernel_size": 5,
+      "contour_thickness": 2,
+      "dark_otsu_threshold": 98.0,
+      "gaussian_blur_kernel_size": 1,
+      "input_representation": "three-channel false-color BGR palette converted to intensity",
+      "minimum_component_area": 16,
+      "minimum_selection_score": 0.35,
+      "opening_kernel_size": 3,
+      "polarity_ambiguity_margin": 0.05,
+      "rng_seed": 2030854514,
+      "target_relative_area": 0.25
+    },
+    "recall": 0.14996157786885245,
+    "reference_dimensions": [
+      480,
+      640
+    ],
+    "reference_foreground_pixels": 78080,
+    "reference_image": "data/reference/aau_vap_scene1_00085_thermal_mask_binary.png",
+    "reference_metadata": {
+      "canonicalization": "nonzero dataset person labels mapped to 255; zero mapped to 0",
+      "source_mask": "data/reference/aau_vap_scene1_00085_thermal_mask.png",
+      "source_values": [
+        0,
+        200,
+        201
+      ]
+    },
+    "reference_status": "available",
+    "reference_type": "ground_truth",
+    "roi": [
+      120,
+      20,
+      450,
+      460
+    ],
+    "selected_polarity": "dark",
+    "source_dimensions": [
+      480,
+      640
+    ],
+    "source_dtype": "uint8",
+    "source_image": "data/thermal/aau_vap_scene1_00085.jpg",
+    "status": "completed",
+    "tn": 26197,
+    "tp": 11709,
+    "warnings": [
+      "Three-channel input was converted from a false-color BGR palette for intensity processing; values are not calibrated temperature.",
+      "The selected component touches the image border; interpret the result cautiously."
+    ]
+  },
+  {
+    "alignment": {
+      "destination_dimensions": [
+        480,
+        640
+      ],
+      "interpolation": "not_applicable",
+      "occurred": false,
+      "original_dimensions": [
+        480,
+        640
+      ],
+      "transformation": "none"
+    },
+    "classical_status": "completed",
+    "dice": 0.04035179837227619,
+    "fn": 34493,
+    "fp": 257931,
+    "image_id": "aau-vap-scene1-frame-00135",
+    "iou": 0.020591348150529855,
+    "method": "classical_thermal_otsu",
+    "modality": "thermal",
+    "precision": 0.023280912151288063,
+    "prediction_foreground_pixels": 264079,
+    "processing_parameters": {
+      "bright_otsu_threshold": 101.0,
+      "closing_kernel_size": 5,
+      "contour_thickness": 2,
+      "dark_otsu_threshold": 101.0,
+      "gaussian_blur_kernel_size": 1,
+      "input_representation": "three-channel false-color BGR palette converted to intensity",
+      "minimum_component_area": 16,
+      "minimum_selection_score": 0.35,
+      "opening_kernel_size": 3,
+      "polarity_ambiguity_margin": 0.05,
+      "rng_seed": 356108694,
+      "target_relative_area": 0.25
+    },
+    "recall": 0.15127580522132822,
+    "reference_dimensions": [
+      480,
+      640
+    ],
+    "reference_foreground_pixels": 40641,
+    "reference_image": "data/reference/aau_vap_scene1_00135_thermal_mask_binary.png",
+    "reference_metadata": {
+      "canonicalization": "nonzero dataset person labels mapped to 255; zero mapped to 0",
+      "source_mask": "data/reference/aau_vap_scene1_00135_thermal_mask.png",
+      "source_values": [
+        0,
+        200,
+        201
+      ]
+    },
+    "reference_status": "available",
+    "reference_type": "ground_truth",
+    "roi": [
+      80,
+      80,
+      350,
+      400
+    ],
+    "selected_polarity": "dark",
+    "source_dimensions": [
+      480,
+      640
+    ],
+    "source_dtype": "uint8",
+    "source_image": "data/thermal/aau_vap_scene1_00135.jpg",
+    "status": "completed",
+    "tn": 8628,
+    "tp": 6148,
+    "warnings": [
+      "Three-channel input was converted from a false-color BGR palette for intensity processing; values are not calibrated temperature.",
+      "The selected component touches the image border; interpret the result cautiously."
+    ]
+  },
+  {
+    "alignment": {
+      "destination_dimensions": [
+        480,
+        640
+      ],
+      "interpolation": "not_applicable",
+      "occurred": false,
+      "original_dimensions": [
+        480,
+        640
+      ],
+      "transformation": "none"
+    },
+    "classical_status": "completed",
+    "dice": 0.041112928341282357,
+    "fn": 31748,
+    "fp": 261985,
+    "image_id": "aau-vap-scene1-frame-00185",
+    "iou": 0.020987901209879013,
+    "method": "classical_thermal_otsu",
+    "modality": "thermal",
+    "precision": 0.023471570958916364,
+    "prediction_foreground_pixels": 268282,
+    "processing_parameters": {
+      "bright_otsu_threshold": 100.0,
+      "closing_kernel_size": 5,
+      "contour_thickness": 2,
+      "dark_otsu_threshold": 100.0,
+      "gaussian_blur_kernel_size": 1,
+      "input_representation": "three-channel false-color BGR palette converted to intensity",
+      "minimum_component_area": 16,
+      "minimum_selection_score": 0.35,
+      "opening_kernel_size": 3,
+      "polarity_ambiguity_margin": 0.05,
+      "rng_seed": 819917455,
+      "target_relative_area": 0.25
+    },
+    "recall": 0.1655145222762518,
+    "reference_dimensions": [
+      480,
+      640
+    ],
+    "reference_foreground_pixels": 38045,
+    "reference_image": "data/reference/aau_vap_scene1_00185_thermal_mask_binary.png",
+    "reference_metadata": {
+      "canonicalization": "nonzero dataset person labels mapped to 255; zero mapped to 0",
+      "source_mask": "data/reference/aau_vap_scene1_00185_thermal_mask.png",
+      "source_values": [
+        0,
+        200,
+        201
+      ]
+    },
+    "reference_status": "available",
+    "reference_type": "ground_truth",
+    "roi": [
+      50,
+      60,
+      350,
+      420
+    ],
+    "selected_polarity": "dark",
+    "source_dimensions": [
+      480,
+      640
+    ],
+    "source_dtype": "uint8",
+    "source_image": "data/thermal/aau_vap_scene1_00185.jpg",
+    "status": "completed",
+    "tn": 7170,
+    "tp": 6297,
+    "warnings": [
+      "Three-channel input was converted from a false-color BGR palette for intensity processing; values are not calibrated temperature.",
+      "The selected component touches the image border; interpret the result cautiously."
+    ]
+  }
+]

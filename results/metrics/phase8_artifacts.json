@@ -1,0 +1,95 @@
+[
+  {
+    "experiment_id": "aau-vap-scene1-00085-rgb",
+    "image_id": "aau-vap-scene1-frame-00085",
+    "modality": "rgb",
+    "status": "completed",
+    "reference_type": "ground_truth",
+    "reference_status": "available",
+    "artifacts": {
+      "classical_mask": "results/rgb/aau-vap-scene1-00085-rgb_classical_mask.png",
+      "boundary_overlay": "results/rgb/aau-vap-scene1-00085-rgb_boundary_overlay.png",
+      "ground_truth_reference": "results/comparisons/aau-vap-scene1-00085-rgb_ground_truth_reference.png",
+      "ground_truth_overlap": "results/comparisons/aau-vap-scene1-00085-rgb_ground_truth_overlap.png"
+    }
+  },
+  {
+    "experiment_id": "aau-vap-scene1-00085-thermal",
+    "image_id": "aau-vap-scene1-frame-00085",
+    "modality": "thermal",
+    "status": "completed",
+    "reference_type": "ground_truth",
+    "reference_status": "available",
+    "artifacts": {
+      "classical_mask": "results/thermal/aau-vap-scene1-00085-thermal_classical_mask.png",
+      "boundary_overlay": "results/thermal/aau-vap-scene1-00085-thermal_boundary_overlay.png",
+      "normalized_intensity": "results/thermal/aau-vap-scene1-00085-thermal_normalized_intensity.png",
+      "bright_candidate": "results/thermal/aau-vap-scene1-00085-thermal_bright_candidate.png",
+      "dark_candidate": "results/thermal/aau-vap-scene1-00085-thermal_dark_candidate.png",
+      "ground_truth_reference": "results/comparisons/aau-vap-scene1-00085-thermal_ground_truth_reference.png",
+      "ground_truth_overlap": "results/comparisons/aau-vap-scene1-00085-thermal_ground_truth_overlap.png"
+    }
+  },
+  {
+    "experiment_id": "aau-vap-scene1-00135-rgb",
+    "image_id": "aau-vap-scene1-frame-00135",
+    "modality": "rgb",
+    "status": "completed",
+    "reference_type": "ground_truth",
+    "reference_status": "available",
+    "artifacts": {
+      "classical_mask": "results/rgb/aau-vap-scene1-00135-rgb_classical_mask.png",
+      "boundary_overlay": "results/rgb/aau-vap-scene1-00135-rgb_boundary_overlay.png",
+      "ground_truth_reference": "results/comparisons/aau-vap-scene1-00135-rgb_ground_truth_reference.png",
+      "ground_truth_overlap": "results/comparisons/aau-vap-scene1-00135-rgb_ground_truth_overlap.png"
+    }
+  },
+  {
+    "experiment_id": "aau-vap-scene1-00135-thermal",
+    "image_id": "aau-vap-scene1-frame-00135",
+    "modality": "thermal",
+    "status": "completed",
+    "reference_type": "ground_truth",
+    "reference_status": "available",
+    "artifacts": {
+      "classical_mask": "results/thermal/aau-vap-scene1-00135-thermal_classical_mask.png",
+      "boundary_overlay": "results/thermal/aau-vap-scene1-00135-thermal_boundary_overlay.png",
+      "normalized_intensity": "results/thermal/aau-vap-scene1-00135-thermal_normalized_intensity.png",
+      "bright_candidate": "results/thermal/aau-vap-scene1-00135-thermal_bright_candidate.png",
+      "dark_candidate": "results/thermal/aau-vap-scene1-00135-thermal_dark_candidate.png",
+      "ground_truth_reference": "results/comparisons/aau-vap-scene1-00135-thermal_ground_truth_reference.png",
+      "ground_truth_overlap": "results/comparisons/aau-vap-scene1-00135-thermal_ground_truth_overlap.png"
+    }
+  },
+  {
+    "experiment_id": "aau-vap-scene1-00185-rgb",
+    "image_id": "aau-vap-scene1-frame-00185",
+    "modality": "rgb",
+    "status": "completed",
+    "reference_type": "ground_truth",
+    "reference_status": "available",
+    "artifacts": {
+      "classical_mask": "results/rgb/aau-vap-scene1-00185-rgb_classical_mask.png",
+      "boundary_overlay": "results/rgb/aau-vap-scene1-00185-rgb_boundary_overlay.png",
+      "ground_truth_reference": "results/comparisons/aau-vap-scene1-00185-rgb_ground_truth_reference.png",
+      "ground_truth_overlap": "results/comparisons/aau-vap-scene1-00185-rgb_ground_truth_overlap.png"
+    }
+  },
+  {
+    "experiment_id": "aau-vap-scene1-00185-thermal",
+    "image_id": "aau-vap-scene1-frame-00185",
+    "modality": "thermal",
+    "status": "completed",
+    "reference_type": "ground_truth",
+    "reference_status": "available",
+    "artifacts": {
+      "classical_mask": "results/thermal/aau-vap-scene1-00185-thermal_classical_mask.png",
+      "boundary_overlay": "results/thermal/aau-vap-scene1-00185-thermal_boundary_overlay.png",
+      "normalized_intensity": "results/thermal/aau-vap-scene1-00185-thermal_normalized_intensity.png",
+      "bright_candidate": "results/thermal/aau-vap-scene1-00185-thermal_bright_candidate.png",
+      "dark_candidate": "results/thermal/aau-vap-scene1-00185-thermal_dark_candidate.png",
+      "ground_truth_reference": "results/comparisons/aau-vap-scene1-00185-thermal_ground_truth_reference.png",
+      "ground_truth_overlap": "results/comparisons/aau-vap-scene1-00185-thermal_ground_truth_overlap.png"
+    }
+  }
+]

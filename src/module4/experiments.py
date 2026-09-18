@@ -7,6 +7,8 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Literal, Mapping, Sequence
 
+import cv2
+
 from module4.io_utils import load_image_bgr, load_image_unchanged
 from module4.metrics import evaluate_masks
 from module4.rgb import run_rgb_segmentation
@@ -313,6 +315,11 @@ def run_experiment_case(case: Mapping[str, Any], *, project_root: Path) -> Exper
     source_path, source_image = _resolve_path(case.get("input_path"), project_root, name="input_path")
     roi = _coerce_roi(case.get("roi"))
     parameters = _parameters(case)
+    rng_seed = case.get("rng_seed")
+    if rng_seed is not None:
+        if isinstance(rng_seed, bool) or not isinstance(rng_seed, int) or not 0 <= rng_seed <= 0x7FFFFFFF:
+            raise ValueError("rng_seed must be an integer between 0 and 2147483647")
+        cv2.setRNGSeed(rng_seed)
     method = "classical_rgb_grabcut" if modality == "rgb" else "classical_thermal_otsu"
     warnings: list[str] = []
     try:
@@ -341,6 +348,8 @@ def run_experiment_case(case: Mapping[str, Any], *, project_root: Path) -> Exper
             )
             selected_polarity = result.selected_polarity
             result_mask = result.final_mask
+        if rng_seed is not None:
+            processing_parameters["rng_seed"] = rng_seed
         warnings.extend(result.warnings)
         reference_status, reference_type, reference_image, reference_dimensions, metrics, alignment, status, warnings, reference_metadata = _evaluate_reference(
             case=case,
@@ -420,7 +429,7 @@ def write_csv_records(records: Sequence[ExperimentRecord], output_path: Path) ->
     """Write a compact deterministic CSV suitable for later result tables."""
     output_path.parent.mkdir(parents=True, exist_ok=True)
     with output_path.open("w", newline="", encoding="utf-8") as handle:
-        writer = csv.DictWriter(handle, fieldnames=CSV_FIELDS)
+        writer = csv.DictWriter(handle, fieldnames=CSV_FIELDS, lineterminator="\n")
         writer.writeheader()
         for record in sorted(records, key=lambda item: (item.modality, item.image_id)):
             value = record.to_dict()

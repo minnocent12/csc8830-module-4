@@ -1,0 +1,178 @@
+{
+  "manifest_version": 1,
+  "selection_rule": "Use the predefined Scene 1 frame IDs 00085, 00135, and 00185 in ascending order. The IDs were fixed before any classical/reference metric was computed; no case is selected or excluded by score.",
+  "source": {
+    "name": "AAU VAP Trimodal People Segmentation Dataset",
+    "publisher": "Aalborg University / Kaggle",
+    "dataset_identifier": "aalborguniversity/trimodal-people-segmentation",
+    "dataset_version": 3,
+    "source_url": "https://www.kaggle.com/datasets/aalborguniversity/trimodal-people-segmentation",
+    "official_project_url": "https://vap.aau.dk/vap-trimodal-people-segmentation-dataset/",
+    "license": "CC BY 4.0",
+    "citation": "Palmero, C., Clapes, A., Bahnsen, C., Mogelmose, A., Moeslund, T. B., and Escalera, S. (2016). Multi-modal RGB-Depth-Thermal Human Body Segmentation. International Journal of Computer Vision, 118(2), 217-239.",
+    "notes": "The dataset supplies aligned RGB and thermal frames and pixel-level people masks. Thermal files are false-color image representations; they are not calibrated temperature arrays."
+  },
+  "sam2": {
+    "status": "blocked",
+    "official_source": "https://github.com/facebookresearch/sam2",
+    "notes": "The local environment lacks the official SAM2 package, PyTorch, and a checkpoint. No SAM2 mask or SAM2 metric is claimed in this manifest's experiment output."
+  },
+  "cases": [
+    {
+      "experiment_id": "aau-vap-scene1-00085-rgb",
+      "image_id": "aau-vap-scene1-frame-00085",
+      "modality": "rgb",
+      "input_path": "data/rgb/aau_vap_scene1_00085.jpg",
+      "reference": {
+        "status": "available",
+        "type": "ground_truth",
+        "path": "data/reference/aau_vap_scene1_00085_rgb_mask_binary.png",
+        "image_id": "aau-vap-scene1-frame-00085",
+        "metadata": {"source_mask": "data/reference/aau_vap_scene1_00085_rgb_mask.png", "source_values": [0, 200, 201, 202], "canonicalization": "nonzero dataset person labels mapped to 255; zero mapped to 0"}
+      },
+      "roi": {"x": 120, "y": 20, "width": 450, "height": 460},
+      "parameters": {
+        "grabcut_iterations": 5,
+        "opening_kernel_size": 3,
+        "closing_kernel_size": 5
+      },
+      "rng_seed": 740948455,
+      "notes": "ROI was predefined from the source RGB scene before reference comparison.",
+      "checksums": {
+        "input_sha256": "ee41e13f3432337de15567e256450c2af01a10836a2f1661dfff91152240d2d5",
+        "raw_reference_sha256": "9196bdd3f6e1ae660279b932e4dd8126de4e2cda71e413153777aeb8b842a064",
+        "canonical_reference_sha256": "f08461100c57e3b704f37bed658c9a3a65dda38f5588d49a4942cdd72e5a9d91"
+      }
+    },
+    {
+      "experiment_id": "aau-vap-scene1-00085-thermal",
+      "image_id": "aau-vap-scene1-frame-00085",
+      "modality": "thermal",
+      "input_path": "data/thermal/aau_vap_scene1_00085.jpg",
+      "reference": {
+        "status": "available",
+        "type": "ground_truth",
+        "path": "data/reference/aau_vap_scene1_00085_thermal_mask_binary.png",
+        "image_id": "aau-vap-scene1-frame-00085",
+        "metadata": {"source_mask": "data/reference/aau_vap_scene1_00085_thermal_mask.png", "source_values": [0, 200, 201], "canonicalization": "nonzero dataset person labels mapped to 255; zero mapped to 0"}
+      },
+      "roi": {"x": 120, "y": 20, "width": 450, "height": 460},
+      "parameters": {
+        "gaussian_blur_kernel_size": 1,
+        "opening_kernel_size": 3,
+        "closing_kernel_size": 5
+      },
+      "rng_seed": 2030854514,
+      "notes": "The classical thermal pipeline evaluates both polarities and selects one independently.",
+      "checksums": {
+        "input_sha256": "938d3d8ede1370e40fd4b8615c701713fde7f0ad4e56ef9cfbbba2aad982c7f9",
+        "raw_reference_sha256": "d422eaa728ee9f0a4683758c030d625c60b870196186aef0fceb0b4014b62ebe",
+        "canonical_reference_sha256": "17a7b5c37b6a129c09915dad704929277a7c4132002ca42049817f225755d14f"
+      }
+    },
+    {
+      "experiment_id": "aau-vap-scene1-00135-rgb",
+      "image_id": "aau-vap-scene1-frame-00135",
+      "modality": "rgb",
+      "input_path": "data/rgb/aau_vap_scene1_00135.jpg",
+      "reference": {
+        "status": "available",
+        "type": "ground_truth",
+        "path": "data/reference/aau_vap_scene1_00135_rgb_mask_binary.png",
+        "image_id": "aau-vap-scene1-frame-00135",
+        "metadata": {"source_mask": "data/reference/aau_vap_scene1_00135_rgb_mask.png", "source_values": [0, 200, 201], "canonicalization": "nonzero dataset person labels mapped to 255; zero mapped to 0"}
+      },
+      "roi": {"x": 80, "y": 80, "width": 350, "height": 400},
+      "parameters": {
+        "grabcut_iterations": 5,
+        "opening_kernel_size": 3,
+        "closing_kernel_size": 5
+      },
+      "rng_seed": 972725737,
+      "notes": "ROI was predefined from the source RGB scene before reference comparison.",
+      "checksums": {
+        "input_sha256": "de5f84e5115beca9b1b5a1d1b8489174b5a3dd6b68f4c94b4f05c076b2c1a3ae",
+        "raw_reference_sha256": "4e4f68d59f9e8e7c9190009136c9ff7136fadf911bf0cf75b190d7a4d7cfa190",
+        "canonical_reference_sha256": "f9a3ed9c33257de9563d4d272ebcae9a60b0b9bc6d0228dcc5bf43012e609180"
+      }
+    },
+    {
+      "experiment_id": "aau-vap-scene1-00135-thermal",
+      "image_id": "aau-vap-scene1-frame-00135",
+      "modality": "thermal",
+      "input_path": "data/thermal/aau_vap_scene1_00135.jpg",
+      "reference": {
+        "status": "available",
+        "type": "ground_truth",
+        "path": "data/reference/aau_vap_scene1_00135_thermal_mask_binary.png",
+        "image_id": "aau-vap-scene1-frame-00135",
+        "metadata": {"source_mask": "data/reference/aau_vap_scene1_00135_thermal_mask.png", "source_values": [0, 200, 201], "canonicalization": "nonzero dataset person labels mapped to 255; zero mapped to 0"}
+      },
+      "roi": {"x": 80, "y": 80, "width": 350, "height": 400},
+      "parameters": {
+        "gaussian_blur_kernel_size": 1,
+        "opening_kernel_size": 3,
+        "closing_kernel_size": 5
+      },
+      "rng_seed": 356108694,
+      "notes": "The classical thermal pipeline evaluates both polarities and selects one independently.",
+      "checksums": {
+        "input_sha256": "ef6783c13678f0129720647cf0794e84c159bccc139a432404b0c6a2f1f73498",
+        "raw_reference_sha256": "9618536f8525d6fafc45ba63b6676f69e7bb5271ad708775e3379dfd24982d13",
+        "canonical_reference_sha256": "69938aaa33404c1b21e683bbaae94c62a90ca4cd586893c77f761ecc3ca5c597"
+      }
+    },
+    {
+      "experiment_id": "aau-vap-scene1-00185-rgb",
+      "image_id": "aau-vap-scene1-frame-00185",
+      "modality": "rgb",
+      "input_path": "data/rgb/aau_vap_scene1_00185.jpg",
+      "reference": {
+        "status": "available",
+        "type": "ground_truth",
+        "path": "data/reference/aau_vap_scene1_00185_rgb_mask_binary.png",
+        "image_id": "aau-vap-scene1-frame-00185",
+        "metadata": {"source_mask": "data/reference/aau_vap_scene1_00185_rgb_mask.png", "source_values": [0, 200, 201], "canonicalization": "nonzero dataset person labels mapped to 255; zero mapped to 0"}
+      },
+      "roi": {"x": 50, "y": 60, "width": 350, "height": 420},
+      "parameters": {
+        "grabcut_iterations": 5,
+        "opening_kernel_size": 3,
+        "closing_kernel_size": 5
+      },
+      "rng_seed": 817123909,
+      "notes": "ROI was predefined from the source RGB scene before reference comparison.",
+      "checksums": {
+        "input_sha256": "e3178ffc3ef284dcefb17106494267d962ff8b1a8edf4b3ef20a0b59597e0c3b",
+        "raw_reference_sha256": "2167d71ecde0ca478c96d15b5fa097a93d6095188b0b15242dcdcc2c794e854e",
+        "canonical_reference_sha256": "8903c395e367ea9a4956dcbfc5cd743fe53fda65a397aba7ed1564370415e574"
+      }
+    },
+    {
+      "experiment_id": "aau-vap-scene1-00185-thermal",
+      "image_id": "aau-vap-scene1-frame-00185",
+      "modality": "thermal",
+      "input_path": "data/thermal/aau_vap_scene1_00185.jpg",
+      "reference": {
+        "status": "available",
+        "type": "ground_truth",
+        "path": "data/reference/aau_vap_scene1_00185_thermal_mask_binary.png",
+        "image_id": "aau-vap-scene1-frame-00185",
+        "metadata": {"source_mask": "data/reference/aau_vap_scene1_00185_thermal_mask.png", "source_values": [0, 200, 201], "canonicalization": "nonzero dataset person labels mapped to 255; zero mapped to 0"}
+      },
+      "roi": {"x": 50, "y": 60, "width": 350, "height": 420},
+      "parameters": {
+        "gaussian_blur_kernel_size": 1,
+        "opening_kernel_size": 3,
+        "closing_kernel_size": 5
+      },
+      "rng_seed": 819917455,
+      "notes": "The classical thermal pipeline evaluates both polarities and selects one independently.",
+      "checksums": {
+        "input_sha256": "d760a4a136d0454b804637b9d9ecb8ae173aef52e825551320afebb1d4c89ec4",
+        "raw_reference_sha256": "e4b60a4ce7704a2ffad932fd4afd223b55764fa0d4e1ff07a7d9e8265c684b00",
+        "canonical_reference_sha256": "741622eea2ca451a495eb3ef4bb95bfb44dfb28afed28ed00a6ed285b7d63324"
+      }
+    }
+  ]
+}
