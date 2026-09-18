@@ -8,10 +8,11 @@ write-up covering Parts A-F.
 ## Current status
 
 Phase 2 implements the ROI-assisted classical RGB pipeline, Phase 3 implements the classical
-thermal pipeline with dual-polarity Otsu segmentation, and Phase 4 implements strict reference
-validation, pixel-level evaluation metrics, a typed experiment runner, and an active comparison
-page. SAM2 inference, Fourier theory, and real empirical results remain pending later approved
-phases. No results or reference masks are fabricated.
+thermal pipeline with dual-polarity Otsu segmentation, Phase 4 implements strict reference
+validation and pixel-level evaluation, and Phase 5 implements an isolated optional official SAM2
+reference adapter plus comparison workflow. SAM2 empirical inference, Fourier theory, and real
+empirical results remain pending user setup and later approved phases. No results or reference
+masks are fabricated.
 
 ## Setup
 
@@ -42,6 +43,15 @@ classical pipeline and evaluates an explicitly uploaded reference; Fourier Theor
 pending-safe.
 
 The standalone app does not require SAM2.
+
+### Optional SAM2 reference environment
+
+The base installation intentionally does not install PyTorch or SAM2. The optional adapter uses
+a separate official `facebookresearch/sam2` checkout/environment. Follow the official SAM2
+installation instructions, keep the checkpoint outside this repository, and set
+`MODULE4_SAM2_CHECKPOINT` to its local path before using the SAM2 option in Comparison and
+Evaluation. The exact API, model/config choices, provenance fields, and pending real-inference
+status are documented in [docs/SAM2_COMPARISON.md](docs/SAM2_COMPARISON.md).
 
 ## Run tests
 
@@ -76,7 +86,7 @@ collection.
 
     app.py
     src/module4/
-      core CV and theory modules
+      core CV, reference adapter, and theory modules
       webapp/             PageSpec provider and Streamlit UI
     data/                 user or verified sample inputs
     results/              derived masks, overlays, comparisons, and metrics
@@ -104,8 +114,10 @@ grading path.
   initialization requirement.
 - Thermal processing distinguishes source intensity data from false-color display data, and
   considers both bright and dark foreground polarity.
-- `sam2_reference` is currently only a provenance label for a user-supplied mask; Phase 4 does
-  not run SAM2 or include a SAM2 adapter.
+- SAM2 is an optional reference segmentation, never ground truth. Its adapter is isolated under
+  `src/module4/reference/`, has no base dependency, and does not influence either classical
+  pipeline. Real SAM2 inference remains pending until a separate official environment and local
+  checkpoint are supplied.
 - Reference masks are not segmentation inputs. The classical prediction is completed before a
   reference is loaded or evaluated.
 - No claim of experimental accuracy, robustness, or RGB-versus-thermal superiority will be made

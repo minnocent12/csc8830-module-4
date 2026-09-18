@@ -29,8 +29,11 @@ whether alignment occurred. Identity and orientation metadata are checked before
 ## Reference semantics
 
 The allowed reference types are `ground_truth`, `sam2_reference`, and `user_reference`. They are
-provenance labels, not interchangeable inference methods. Phase 4 never runs SAM2; a
-`sam2_reference` row means that the user supplied a mask with that declared provenance.
+provenance labels, not interchangeable inference methods. Phase 4 records could label a
+user-supplied mask as `sam2_reference`; Phase 5 adds an isolated optional official SAM2 adapter.
+A completed Phase 5 SAM2 row records the model, config, checkpoint identifier, device, prompt,
+native-score selection rule, and source identity. SAM2 is still a reference segmentation, not
+ground truth.
 
 The prediction image ID and reference image ID must match. An explicitly mismatched orientation
 also fails. A missing/pending reference yields a pending record with null metrics and a warning;
@@ -43,7 +46,7 @@ it is not a zero-valued result. A failed reference is recorded as failed with nu
 duplicate either segmentation pipeline. Classical processing runs to completion before the
 reference path is loaded, so reference masks cannot influence the prediction. Each record stores
 the image ID, modality, method, project-relative input/reference paths, source dimensions and
-dtype, parameters, ROI/polarity, reference status/type, alignment metadata, metrics, status, and
+dtype, parameters, ROI/polarity, reference status/type, reference metadata, alignment metadata, metrics, status, and
 warnings. Absolute paths outside the configured project root are rejected.
 
 Example configuration (illustrative schema only; it is not an experiment row):
@@ -110,5 +113,7 @@ intentional and must not be replaced with plausible values.
 |---|---|---|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---|
 | pending user data | RGB/Thermal | classical pipeline | pending | pending |  |  |  |  |  |  |  |  |  |
 
-Phase 5 recommendation: optional isolated SAM2 reference integration and comparison, only after
-separate approval and real reference/provenance data are available.
+Phase 5 status: the isolated SAM2 reference integration and comparison workflow is implemented.
+Real checkpoint inference and empirical SAM2 comparison results remain pending until the user
+supplies the separate official environment, local checkpoint, and actual images. Phase 6 remains
+out of scope here; its only recommendation is the Fourier Parts A-F theory work.

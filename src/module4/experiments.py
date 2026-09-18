@@ -26,7 +26,8 @@ from module4.validation import (
 )
 
 Modality = Literal["rgb", "thermal"]
-ExperimentStatus = Literal["completed", "pending_reference", "failed"]
+ExperimentReferenceStatus = Literal["available", "pending", "unavailable", "ready", "completed", "failed"]
+ExperimentStatus = Literal["completed", "pending_reference", "reference_unavailable", "failed"]
 
 
 @dataclass(frozen=True)
@@ -40,7 +41,7 @@ class ExperimentRecord:
     source_dimensions: tuple[int, int] | None
     source_dtype: str | None
     reference_type: ReferenceType | None
-    reference_status: Literal["available", "pending", "failed"]
+    reference_status: ExperimentReferenceStatus
     reference_image: str | None
     reference_dimensions: tuple[int, int] | None
     processing_parameters: Mapping[str, Any]
@@ -51,6 +52,7 @@ class ExperimentRecord:
     classical_status: Literal["completed", "failed"]
     status: ExperimentStatus
     warnings: tuple[str, ...]
+    reference_metadata: Mapping[str, Any] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         """Return a JSON-compatible record with stable field names."""
@@ -65,6 +67,7 @@ class ExperimentRecord:
             "reference_status": self.reference_status,
             "reference_image": self.reference_image,
             "reference_dimensions": list(self.reference_dimensions) if self.reference_dimensions else None,
+            "reference_metadata": dict(self.reference_metadata) if self.reference_metadata else None,
             "processing_parameters": dict(self.processing_parameters),
             "roi": list(self.roi) if self.roi else None,
             "selected_polarity": self.selected_polarity,
@@ -103,6 +106,7 @@ CSV_FIELDS = (
     "reference_status",
     "reference_image",
     "reference_dimensions",
+    "reference_metadata",
     "roi",
     "selected_polarity",
     "alignment",
@@ -168,7 +172,7 @@ def _record(
     source_dimensions: tuple[int, int] | None,
     source_dtype: str | None,
     reference_type: ReferenceType | None,
-    reference_status: Literal["available", "pending", "failed"],
+    reference_status: ExperimentReferenceStatus,
     reference_image: str | None,
     reference_dimensions: tuple[int, int] | None,
     processing_parameters: Mapping[str, Any],
@@ -179,6 +183,7 @@ def _record(
     classical_status: Literal["completed", "failed"],
     status: ExperimentStatus,
     warnings: Sequence[str],
+    reference_metadata: Mapping[str, Any] | None = None,
 ) -> ExperimentRecord:
     return ExperimentRecord(
         image_id=image_id,
@@ -199,6 +204,7 @@ def _record(
         classical_status=classical_status,
         status=status,
         warnings=tuple(warnings),
+        reference_metadata=dict(reference_metadata) if reference_metadata else None,
     )
 
 
@@ -218,15 +224,17 @@ def _evaluate_reference(
     image_id: str,
     project_root: Path,
     base_warnings: list[str],
-) -> tuple[Literal["available", "pending", "failed"], ReferenceType | None, str | None, tuple[int, int] | None, SegmentationMetrics | None, AlignmentMetadata | None, ExperimentStatus, list[str]]:
+) -> tuple[ExperimentReferenceStatus, ReferenceType | None, str | None, tuple[int, int] | None, SegmentationMetrics | None, AlignmentMetadata | None, ExperimentStatus, list[str], Mapping[str, Any] | None]:
     """Evaluate only after the classical pipeline has completed."""
     spec = _reference_spec(case)
     raw_status = spec.get("status")
     reference_path = spec.get("path")
-    status: Literal["available", "pending", "failed"] = (
-        raw_status if raw_status in {"available", "pending", "failed"}
-        else ("available" if reference_path else "pending")
-    )
+    if raw_status in {"available", "completed"}:
+        status: ExperimentReferenceStatus = "available"
+    elif raw_status in {"pending", "unavailable", "ready", "failed"}:
+        status = raw_status
+    else:
+        status = "available" if reference_path else "pending"
     reference_type = spec.get("type")
     if reference_type not in {"ground_truth", "sam2_reference", "user_reference", None}:
         raise ValueError("reference.type must be ground_truth, sam2_reference, or user_reference")
@@ -234,12 +242,19 @@ def _evaluate_reference(
     if reference_path is not None:
         _, reference_image = _resolve_path(reference_path, project_root, name="reference.path")
     warnings = list(base_warnings)
+    reference_metadata = spec.get("metadata") if isinstance(spec.get("metadata"), Mapping) else None
     if status == "pending":
         warnings.append("Reference mask is pending; no metrics were generated.")
-        return "pending", reference_type, reference_image, None, None, None, "pending_reference", warnings
+        return "pending", reference_type, reference_image, None, None, None, "pending_reference", warnings, reference_metadata
+    if status == "unavailable":
+        warnings.append("Reference integration is unavailable; no metrics were generated.")
+        return "unavailable", reference_type, reference_image, None, None, None, "reference_unavailable", warnings, reference_metadata
+    if status == "ready":
+        warnings.append("Reference integration is ready but inference has not completed; no metrics were generated.")
+        return "ready", reference_type, reference_image, None, None, None, "reference_unavailable", warnings, reference_metadata
     if status == "failed":
         warnings.append("Reference status is failed; no metrics were generated.")
-        return "failed", reference_type, reference_image, None, None, None, "failed", warnings
+        return "failed", reference_type, reference_image, None, None, None, "failed", warnings, reference_metadata
     if reference_path is None:
         raise ReferenceValidationError("available reference requires reference.path")
     reference_path_resolved, _ = _resolve_path(reference_path, project_root, name="reference.path")
@@ -281,7 +296,7 @@ def _evaluate_reference(
         raise ReferenceValidationError("reference validation returned no mask")
     metrics = evaluate_masks(result_mask, canonical)
     warnings.extend([])
-    return "available", reference_type, reference_image, (int(reference.shape[0]), int(reference.shape[1])), metrics, alignment, "completed", warnings
+    return "available", reference_type, reference_image, (int(reference.shape[0]), int(reference.shape[1])), metrics, alignment, "completed", warnings, reference_metadata
 
 
 def run_experiment_case(case: Mapping[str, Any], *, project_root: Path) -> ExperimentRecord:
@@ -327,7 +342,7 @@ def run_experiment_case(case: Mapping[str, Any], *, project_root: Path) -> Exper
             selected_polarity = result.selected_polarity
             result_mask = result.final_mask
         warnings.extend(result.warnings)
-        reference_status, reference_type, reference_image, reference_dimensions, metrics, alignment, status, warnings = _evaluate_reference(
+        reference_status, reference_type, reference_image, reference_dimensions, metrics, alignment, status, warnings, reference_metadata = _evaluate_reference(
             case=case,
             result_mask=result_mask,
             image_id=image_id,
@@ -353,6 +368,7 @@ def run_experiment_case(case: Mapping[str, Any], *, project_root: Path) -> Exper
             classical_status="completed",
             status=status,
             warnings=warnings,
+            reference_metadata=reference_metadata,
         )
     except (OSError, TypeError, ValueError) as exc:
         try:
@@ -360,9 +376,10 @@ def run_experiment_case(case: Mapping[str, Any], *, project_root: Path) -> Exper
         except (TypeError, ValueError):
             reference_spec = {}
         reference_type = reference_spec.get("type") if reference_spec.get("type") in {"ground_truth", "sam2_reference", "user_reference"} else None
-        reference_status = reference_spec.get("status") if reference_spec.get("status") in {"available", "pending", "failed"} else ("available" if reference_spec.get("path") else "pending")
-        if reference_status == "available":
+        reference_status = reference_spec.get("status") if reference_spec.get("status") in {"available", "pending", "unavailable", "ready", "completed", "failed"} else ("available" if reference_spec.get("path") else "pending")
+        if reference_status in {"available", "completed"}:
             reference_status = "failed"
+        reference_metadata = reference_spec.get("metadata") if isinstance(reference_spec.get("metadata"), Mapping) else None
         return _record(
             image_id=image_id,
             modality=modality,
@@ -382,6 +399,7 @@ def run_experiment_case(case: Mapping[str, Any], *, project_root: Path) -> Exper
             classical_status="failed",
             status="failed",
             warnings=(f"Case failed: {exc}",),
+            reference_metadata=reference_metadata,
         )
 
 
@@ -410,6 +428,6 @@ def write_csv_records(records: Sequence[ExperimentRecord], output_path: Path) ->
                 field: value.get(field)
                 for field in CSV_FIELDS
             }
-            for field in ("source_dimensions", "reference_dimensions", "roi", "alignment", "processing_parameters", "warnings"):
+            for field in ("source_dimensions", "reference_dimensions", "reference_metadata", "roi", "alignment", "processing_parameters", "warnings"):
                 row[field] = json.dumps(row[field], sort_keys=True, separators=(",", ":"))
             writer.writerow(row)
