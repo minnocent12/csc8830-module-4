@@ -1,4 +1,4 @@
-"""Small Streamlit UI helpers for the foundation phase."""
+"""Small Streamlit UI helpers for honest pending-state messages."""
 from __future__ import annotations
 
 import streamlit as st
@@ -10,7 +10,7 @@ def pending_experiment_banner(detail: str | None = None) -> None:
     """Display an honest notice for work that needs later implementation or user data."""
     message = (
         "**PENDING USER EXPERIMENT / LATER PHASE.** "
-        "No empirical result or reference mask is available in the foundation phase."
+        "No empirical result or reference mask is available yet."
     )
     st.warning(message if detail is None else f"{message}\n\n{detail}")
 

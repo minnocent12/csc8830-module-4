@@ -9,9 +9,10 @@ does not claim reliable automatic human detection.
 The implementation uses NumPy and OpenCV only: input validation, finite min/max normalization,
 optional Gaussian denoising, dual-polarity Otsu thresholding, morphology, connected components,
 deterministic scoring, external contours, and copy-based visualization. There is no ML/DL
-dependency, SAM2 inference, evaluation metric, Fourier implementation, dataset result, or
-fabricated experiment claim in Phase 3. SAM2 comparison, metrics, and empirical RGB-versus-thermal
-observations remain pending later approved phases and real user data.
+dependency, SAM2 inference, Fourier implementation, dataset result, or fabricated experiment
+claim in the Phase 3 pipeline. Phase 4 adds evaluation infrastructure around this pipeline, but
+SAM2 comparison and empirical RGB-versus-thermal observations remain pending later approved
+phases and real user data.
 
 The pipeline should be described as **ROI-assisted classical human segmentation** when an ROI is
 provided, or as **classical thermal intensity segmentation with transparent geometry heuristics**
@@ -160,5 +161,6 @@ uint8 values 0 and 255. Contours do not replace the mask, and the overlay is dra
 Otsu thresholding and simple component geometry are scene-dependent. The pipeline evaluates both
 foreground polarities, but that does not prove that either candidate is a human. No reliability,
 accuracy, robustness, or RGB-versus-thermal superiority claim is made here. Real thermal images,
-reference masks, metrics, SAM2 comparison, and experiment conclusions require later approved
-work and actual user-collected or provenance-verified data.
+reference masks, SAM2 comparison, and experiment conclusions require later approved work and
+actual user-collected or provenance-verified data. Phase 4's metrics are available only when a
+user supplies a validated reference; no experiment rows are bundled here.

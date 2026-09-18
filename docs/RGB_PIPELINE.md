@@ -66,6 +66,6 @@ automatic performance on arbitrary RGB scenes.
 
 ## Current evaluation status
 
-Numerical metrics are intentionally not implemented in Phase 2. IoU, Dice, precision, recall,
-reference-mask alignment, and SAM2 comparison belong to later phases. No empirical RGB result
-or performance value is reported here.
+Pixel-level metrics and conservative reference validation are implemented separately in
+`module4.metrics` and `module4.validation` during Phase 4. This document still reports no
+empirical RGB result or performance value; those require actual user images and reference masks.

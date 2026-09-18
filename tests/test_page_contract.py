@@ -25,6 +25,12 @@ def test_module4_provider_returns_stable_pages() -> None:
     assert {page.module_label for page in pages} == {"Module 4"}
 
 
+def test_comparison_page_is_an_active_provider_page() -> None:
+    comparison = next(page for page in get_pages() if page.page_label == "Comparison and Evaluation")
+    assert comparison.order == 30
+    assert comparison.render.__name__ == "_comparison_page"
+
+
 def test_registry_merges_and_orders_multiple_providers() -> None:
     pages = collect_pages([get_pages, _fake_provider])
     assert [(page.module_label, page.page_label) for page in pages] == [

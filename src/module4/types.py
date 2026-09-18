@@ -10,6 +10,8 @@ ColorOrder = Literal["BGR", "RGB", "GRAY", "THERMAL"]
 ReferenceStatusValue = Literal["pending", "completed", "failed", "unavailable"]
 ThermalPolarity = Literal["bright", "dark"]
 ThermalStatus = Literal["selected", "ambiguous", "weak", "constant", "empty"]
+ReferenceType = Literal["ground_truth", "sam2_reference", "user_reference"]
+EvaluationReferenceStatus = Literal["available", "pending", "failed"]
 
 
 @dataclass(frozen=True)
@@ -156,4 +158,53 @@ class ThermalSegmentationResult:
     boundary_overlay_bgr: np.ndarray
     status: ThermalStatus
     parameters: Mapping[str, int | float]
+    warnings: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class ConfusionCounts:
+    """Pixel-level binary confusion counts."""
+
+    tp: int
+    fp: int
+    fn: int
+    tn: int
+
+
+@dataclass(frozen=True)
+class SegmentationMetrics:
+    """Pixel-level metrics and counts for two aligned canonical masks."""
+
+    iou: float
+    dice: float
+    precision: float
+    recall: float
+    tp: int
+    fp: int
+    fn: int
+    tn: int
+    prediction_foreground_pixels: int
+    reference_foreground_pixels: int
+
+
+@dataclass(frozen=True)
+class AlignmentMetadata:
+    """Records an explicit reference-mask alignment operation."""
+
+    original_dimensions: tuple[int, int]
+    destination_dimensions: tuple[int, int]
+    transformation: str
+    interpolation: str
+    occurred: bool
+
+
+@dataclass(frozen=True)
+class ReferenceValidation:
+    """Result of checking reference availability and mask readiness."""
+
+    status: EvaluationReferenceStatus
+    reference_type: ReferenceType | None
+    image_id: str | None
+    mask: np.ndarray | None
+    alignment: AlignmentMetadata | None
     warnings: tuple[str, ...]
