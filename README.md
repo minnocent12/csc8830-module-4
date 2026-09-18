@@ -10,9 +10,10 @@ write-up covering Parts A-F.
 Phase 2 implements the ROI-assisted classical RGB pipeline, Phase 3 implements the classical
 thermal pipeline with dual-polarity Otsu segmentation, Phase 4 implements strict reference
 validation and pixel-level evaluation, Phase 5 implements an isolated optional official SAM2
-reference adapter plus comparison workflow, and Phase 6 implements the Fourier Parts A–F theory
-and deterministic educational demonstrations. Real SAM2 inference, RGB/thermal experiments, and
-final empirical results remain pending user setup. No results or reference masks are fabricated.
+reference adapter plus comparison workflow, Phase 6 implements the Fourier Parts A–F theory and
+deterministic educational demonstrations, and Phase 7 completes assignment-wide Streamlit
+integration and UX polish. Real SAM2 inference, RGB/thermal experiments, and final empirical
+results remain pending user setup. No results or reference masks are fabricated.
 
 ## Setup
 
@@ -31,16 +32,20 @@ From this repository root:
 
     streamlit run app.py
 
-The current app exposes four pages:
+The current app exposes four consistently ordered pages:
 
-- RGB Human Boundary (Phase 2 implemented)
-- Thermal Human Boundary
-- Comparison and Evaluation
-- Fourier Theory
+- Question 1 — RGB Human Boundary
+- Question 2 — Thermal Human Boundary
+- Supporting evaluation — Comparison and Evaluation
+- Question 3 — Fourier Theory (Parts A–F)
 
-The RGB and Thermal pages perform classical processing. Comparison and Evaluation runs one
-classical pipeline and evaluates an explicitly uploaded reference. Fourier Theory teaches Parts
-A–F and supports uploaded scalar-image or deterministic synthetic demonstrations.
+The RGB and Thermal pages perform classical OpenCV processing and expose their intermediate
+sequence. The RGB page requires a user-supplied ROI. The Thermal page evaluates both bright and
+dark Otsu hypotheses and distinguishes source intensity data from false-color display palettes.
+Comparison and Evaluation runs one classical pipeline, validates an explicitly uploaded reference
+or optional SAM2 reference segmentation, and reports metrics only when a valid reference is
+available. Fourier Theory visually separates Parts A–F theory from uploaded or deterministic
+educational demonstrations.
 The canonical written theory is [docs/FOURIER_THEORY.md](docs/FOURIER_THEORY.md).
 
 The standalone app does not require SAM2.
