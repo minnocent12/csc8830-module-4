@@ -3,9 +3,10 @@ from __future__ import annotations
 
 import streamlit as st
 
-from module4.io_utils import decode_image_bgr
+from module4.io_utils import decode_image_unchanged
 from module4.rgb import run_rgb_segmentation
-from module4.types import ROI, RGBPipelineConfig
+from module4.thermal import run_thermal_segmentation, thermal_source_display_bgr
+from module4.types import ROI, RGBPipelineConfig, ThermalPipelineConfig
 from module4.webapp._page import PageSpec
 from module4.webapp.ui import IMAGE_TYPES, foundation_page, pending_experiment_banner
 from module4.visualization import bgr_to_rgb, display_mask, to_display_uint8
@@ -117,10 +118,125 @@ def _rgb_page() -> None:
 
 
 def _thermal_page() -> None:
-    foundation_page(
-        "Thermal Human Boundary",
-        "Thermal image loading, normalization, classical polarity handling, contour extraction, "
-        "and reference comparison will be added in later phases.",
+    st.header("Thermal Human Boundary")
+    st.info(
+        "This implementation uses classical OpenCV image processing only. Human/background "
+        "polarity is not assumed in advance; bright and dark Otsu candidates are both evaluated."
+    )
+    upload = st.file_uploader("Thermal or thermal-intensity image", type=IMAGE_TYPES)
+    if upload is None:
+        pending_experiment_banner("Upload a thermal image to run the Phase 3 pipeline.")
+        return
+    try:
+        image = decode_image_unchanged(upload.getvalue(), source_name=upload.name)
+    except (TypeError, ValueError) as exc:
+        st.error(f"Could not read the thermal image: {exc}")
+        return
+
+    height, width = image.shape[:2]
+    st.caption(
+        f"Input: {upload.name} | {width} x {height} pixels | source dtype: {image.dtype} | "
+        "three-channel inputs are treated as false-color BGR palettes"
+    )
+    try:
+        source_preview_bgr = thermal_source_display_bgr(image)
+    except (TypeError, ValueError) as exc:
+        st.error(f"Thermal source is not supported: {exc}")
+        return
+    st.image(
+        bgr_to_rgb(source_preview_bgr),
+        caption="Original source (display-only scaling; computational source is preserved)",
+        width="stretch",
+    )
+
+    use_roi = st.checkbox("Use an optional ROI to strengthen component selection", value=False)
+    roi = None
+    if use_roi:
+        if width < 2 or height < 2:
+            st.error("An ROI requires an image at least 2 x 2 pixels; disable ROI to continue.")
+            return
+        st.caption("The ROI is strict xywh: x and y are the upper-left pixel; width and height are pixels.")
+        c1, c2, c3, c4 = st.columns(4)
+        x = int(c1.number_input("x", min_value=0, max_value=width - 2, value=width // 4, step=1))
+        y = int(c2.number_input("y", min_value=0, max_value=height - 2, value=height // 4, step=1))
+        roi_width = int(
+            c3.number_input(
+                "width",
+                min_value=2,
+                max_value=width - x,
+                value=min(max(2, width // 2), width - x),
+                step=1,
+            )
+        )
+        roi_height = int(
+            c4.number_input(
+                "height",
+                min_value=2,
+                max_value=height - y,
+                value=min(max(2, height // 2), height - y),
+                step=1,
+            )
+        )
+        roi = ROI(x, y, roi_width, roi_height)
+        st.caption(f"Selected ROI: x={x}, y={y}, width={roi_width}, height={roi_height}")
+
+    gaussian_size = int(st.select_slider("Gaussian denoising kernel", options=[1, 3, 5], value=1))
+    opening_size = int(st.select_slider("Opening kernel", options=[1, 3, 5, 7], value=3))
+    closing_size = int(st.select_slider("Closing kernel", options=[1, 3, 5, 7], value=5))
+    if not st.button("Run classical thermal segmentation", type="primary"):
+        pending_experiment_banner("Configure optional preprocessing/ROI settings and run the thermal pipeline.")
+        return
+
+    try:
+        result = run_thermal_segmentation(
+            image,
+            roi,
+            config=ThermalPipelineConfig(
+                gaussian_blur_kernel_size=gaussian_size,
+                opening_kernel_size=opening_size,
+                closing_kernel_size=closing_size,
+            ),
+        )
+    except (TypeError, ValueError) as exc:
+        st.error(f"Thermal segmentation could not run: {exc}")
+        return
+
+    st.subheader("Classical thermal intermediate results")
+    c1, c2, c3 = st.columns(3)
+    with c1:
+        st.image(bgr_to_rgb(result.source_display_bgr), caption="Source for display", width="stretch")
+    with c2:
+        st.image(result.normalized_intensity, caption="Normalized intensity", width="stretch")
+    with c3:
+        st.image(result.enhanced_intensity, caption="Enhanced intensity", width="stretch")
+    c1, c2, c3, c4 = st.columns(4)
+    with c1:
+        st.image(display_mask(result.bright_raw_mask), caption=f"Bright Otsu raw (t={result.bright_otsu_threshold:.2f})", width="stretch")
+    with c2:
+        st.image(display_mask(result.dark_raw_mask), caption=f"Dark Otsu raw (t={result.dark_otsu_threshold:.2f})", width="stretch")
+    with c3:
+        st.image(display_mask(result.bright_cleaned_mask), caption="Bright after morphology", width="stretch")
+    with c4:
+        st.image(display_mask(result.dark_cleaned_mask), caption="Dark after morphology", width="stretch")
+    c1, c2, c3 = st.columns(3)
+    with c1:
+        st.image(display_mask(result.final_mask), caption="Selected final mask", width="stretch")
+    with c2:
+        st.image(bgr_to_rgb(result.boundary_overlay_bgr), caption="Final boundary overlay", width="stretch")
+    with c3:
+        st.write(f"Status: **{result.status}**")
+        st.write(f"Selected polarity: **{result.selected_polarity or 'none'}**")
+        if result.selected_component is not None:
+            component = result.selected_component
+            st.write(
+                f"Component label {component.label}; area {component.area} pixels; "
+                f"score {component.score:.3f}; border contact: {component.touches_border}."
+            )
+    for warning in result.warnings:
+        st.warning(warning)
+    st.caption(
+        "SAM2 reference comparison, IoU/Dice/precision/recall, Fourier theory, and empirical "
+        "RGB-versus-thermal conclusions remain pending later approved phases and real data."
     )
 
 

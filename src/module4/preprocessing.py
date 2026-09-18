@@ -83,3 +83,30 @@ def apply_morphological_cleanup(
         )
         cleaned = cv2.morphologyEx(cleaned, cv2.MORPH_CLOSE, closing_kernel)
     return cleaned > 0
+
+
+def normalize_thermal_intensity(image: np.ndarray) -> tuple[np.ndarray, float, float]:
+    """Normalize a finite single-channel intensity array to uint8 in ``[0, 255]``.
+
+    The source array is not modified. Supported source dtypes are uint8, uint16, float32,
+    and float64. A constant image maps to all zeros and returns equal minimum and maximum
+    values instead of dividing by zero.
+    """
+    if not isinstance(image, np.ndarray):
+        raise TypeError("thermal intensity must be a numpy.ndarray")
+    if image.ndim != 2:
+        raise ValueError("thermal intensity must be a 2D array")
+    if image.size == 0 or image.shape[0] <= 0 or image.shape[1] <= 0:
+        raise ValueError("thermal intensity must not be empty")
+    supported_dtypes = (np.dtype(np.uint8), np.dtype(np.uint16), np.dtype(np.float32), np.dtype(np.float64))
+    if image.dtype not in supported_dtypes:
+        raise TypeError("thermal intensity dtype must be uint8, uint16, float32, or float64")
+    if image.dtype.kind == "f" and not np.isfinite(image).all():
+        raise ValueError("thermal intensity contains non-finite values")
+    values = image.astype(np.float64, copy=False)
+    minimum = float(np.min(values))
+    maximum = float(np.max(values))
+    if minimum == maximum:
+        return np.zeros(image.shape, dtype=np.uint8), minimum, maximum
+    normalized = (values - minimum) * (255.0 / (maximum - minimum))
+    return np.clip(np.rint(normalized), 0, 255).astype(np.uint8), minimum, maximum
