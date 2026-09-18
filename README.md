@@ -7,9 +7,10 @@ write-up covering Parts A-F.
 
 ## Current status
 
-Phase 2 implements the ROI-assisted classical RGB pipeline and its Streamlit page. Thermal
-segmentation, SAM2 comparison, metrics, Fourier theory, and empirical results are scheduled for
-later approved phases. No results or reference masks are fabricated.
+Phase 2 implements the ROI-assisted classical RGB pipeline and Phase 3 implements the classical
+thermal pipeline with dual-polarity Otsu segmentation and its Streamlit page. Comparison metrics,
+SAM2 reference comparison, Fourier theory, and empirical results remain pending later approved
+phases. No results or reference masks are fabricated.
 
 ## Setup
 
@@ -35,7 +36,8 @@ The current app exposes four pages:
 - Comparison and Evaluation
 - Fourier Theory
 
-Only the RGB page performs processing in this phase. The other pages remain pending-safe.
+The RGB and Thermal pages perform classical processing. The Comparison and Evaluation and Fourier
+Theory pages remain pending-safe.
 
 The standalone app does not require SAM2.
 
@@ -43,8 +45,9 @@ The standalone app does not require SAM2.
 
     python -m pytest -q
 
-Tests cover image validation, BGR decoding, canonical boolean masks, metadata, and the
-dashboard-compatible page-provider contract. They do not count as experimental validation.
+Tests cover image validation, BGR/unchanged decoding, canonical boolean masks, RGB and thermal
+pipeline behavior, metadata, and the dashboard-compatible page-provider contract. They do not
+count as experimental validation.
 
 ## Planned reproduction workflow
 
@@ -90,7 +93,8 @@ grading path.
 
 - Traditional still-image human segmentation is scene-dependent and will document any ROI or
   initialization requirement.
-- Thermal processing must distinguish intensity data from false-color display data.
+- Thermal processing distinguishes source intensity data from false-color display data, and
+  considers both bright and dark foreground polarity.
 - SAM2 is a comparison/reference method only and will remain optional.
 - No claim of experimental accuracy, robustness, or RGB-versus-thermal superiority will be made
   before actual user experiments.

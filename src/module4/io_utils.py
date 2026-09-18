@@ -56,6 +56,18 @@ def decode_image_bgr(data: bytes, *, source_name: str | None = None) -> np.ndarr
     return validate_image_array(image, name="decoded BGR image", color_order="BGR").copy()
 
 
+def decode_image_unchanged(data: bytes, *, source_name: str | None = None) -> np.ndarray:
+    """Decode uploaded bytes while preserving grayscale channels and source bit depth."""
+    if not data:
+        raise ValueError("image data is empty")
+    encoded = np.frombuffer(data, dtype=np.uint8)
+    image = cv2.imdecode(encoded, cv2.IMREAD_UNCHANGED)
+    if image is None:
+        label = f" from {source_name}" if source_name else ""
+        raise ValueError(f"could not decode image{label}")
+    return validate_image_array(image, name="decoded unchanged image").copy()
+
+
 def load_image_bgr(path: str | Path) -> np.ndarray:
     """Load a path as a BGR uint8 image without modifying the source file."""
     image_path = Path(path)

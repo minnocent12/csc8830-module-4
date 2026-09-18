@@ -6,6 +6,7 @@ import pytest
 
 from module4.io_utils import (
     decode_image_bgr,
+    decode_image_unchanged,
     describe_image,
     mask_to_uint8,
     normalize_binary_mask,
@@ -45,6 +46,17 @@ def test_decode_image_bgr_returns_expected_shape_and_order() -> None:
 def test_decode_image_bgr_rejects_empty_bytes() -> None:
     with pytest.raises(ValueError, match="empty"):
         decode_image_bgr(b"")
+
+
+def test_decode_image_unchanged_preserves_grayscale_bit_depth() -> None:
+    source = np.array([[0, 1024], [50000, 65535]], dtype=np.uint16)
+    success, encoded = cv2.imencode(".png", source)
+    assert success
+
+    decoded = decode_image_unchanged(encoded.tobytes(), source_name="thermal.png")
+
+    assert decoded.dtype == np.uint16
+    np.testing.assert_array_equal(decoded, source)
 
 
 def test_normalize_binary_mask_uses_false_background_and_copies() -> None:
