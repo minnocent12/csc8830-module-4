@@ -7,9 +7,10 @@ write-up covering Parts A-F.
 
 ## Current status
 
-Phase 2 implements the ROI-assisted classical RGB pipeline and Phase 3 implements the classical
-thermal pipeline with dual-polarity Otsu segmentation and its Streamlit page. Comparison metrics,
-SAM2 reference comparison, Fourier theory, and empirical results remain pending later approved
+Phase 2 implements the ROI-assisted classical RGB pipeline, Phase 3 implements the classical
+thermal pipeline with dual-polarity Otsu segmentation, and Phase 4 implements strict reference
+validation, pixel-level evaluation metrics, a typed experiment runner, and an active comparison
+page. SAM2 inference, Fourier theory, and real empirical results remain pending later approved
 phases. No results or reference masks are fabricated.
 
 ## Setup
@@ -36,8 +37,9 @@ The current app exposes four pages:
 - Comparison and Evaluation
 - Fourier Theory
 
-The RGB and Thermal pages perform classical processing. The Comparison and Evaluation and Fourier
-Theory pages remain pending-safe.
+The RGB and Thermal pages perform classical processing. Comparison and Evaluation runs one
+classical pipeline and evaluates an explicitly uploaded reference; Fourier Theory remains
+pending-safe.
 
 The standalone app does not require SAM2.
 
@@ -46,15 +48,23 @@ The standalone app does not require SAM2.
     python -m pytest -q
 
 Tests cover image validation, BGR/unchanged decoding, canonical boolean masks, RGB and thermal
-pipeline behavior, metadata, and the dashboard-compatible page-provider contract. They do not
-count as experimental validation.
+pipeline behavior, strict evaluation metrics and alignment, typed experiment records, metadata,
+and the dashboard-compatible page-provider contract. They do not count as experimental validation.
 
 ## Planned reproduction workflow
 
-Later phases will add the following commands and outputs:
+An experiment run requires an explicit JSON configuration containing the user's input/reference
+paths. The runner never invents rows or metrics:
 
-    python scripts/run_experiments.py
-    python scripts/build_report.py
+    python scripts/run_experiments.py \
+      --config path/to/experiment_config.json \
+      --project-root . \
+      --output-json results/experiment_records.json \
+      --output-csv results/experiment_records.csv
+
+See [docs/EXPERIMENTAL_RESULTS.md](docs/EXPERIMENTAL_RESULTS.md) for the configuration schema,
+reference-validation rules, and the empty results-table template. A pending reference produces a
+record with null metrics; it is never represented as a zero score.
 
 User images will be supplied under the data directories or through the app. Large datasets,
 model checkpoints, and user-collected reference masks are not committed by default. A sample
@@ -67,7 +77,6 @@ collection.
     app.py
     src/module4/
       core CV and theory modules
-      reference/          optional SAM2 adapter, isolated from classical processing
       webapp/             PageSpec provider and Streamlit UI
     data/                 user or verified sample inputs
     results/              derived masks, overlays, comparisons, and metrics
@@ -95,6 +104,9 @@ grading path.
   initialization requirement.
 - Thermal processing distinguishes source intensity data from false-color display data, and
   considers both bright and dark foreground polarity.
-- SAM2 is a comparison/reference method only and will remain optional.
+- `sam2_reference` is currently only a provenance label for a user-supplied mask; Phase 4 does
+  not run SAM2 or include a SAM2 adapter.
+- Reference masks are not segmentation inputs. The classical prediction is completed before a
+  reference is loaded or evaluated.
 - No claim of experimental accuracy, robustness, or RGB-versus-thermal superiority will be made
   before actual user experiments.
