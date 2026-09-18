@@ -12,8 +12,9 @@ thermal pipeline with dual-polarity Otsu segmentation, Phase 4 implements strict
 validation and pixel-level evaluation, Phase 5 implements an isolated optional official SAM2
 reference adapter plus comparison workflow, Phase 6 implements the Fourier Parts A–F theory and
 deterministic educational demonstrations, and Phase 7 completes assignment-wide Streamlit
-integration and UX polish. Real SAM2 inference, RGB/thermal experiments, and final empirical
-results remain pending user setup. No results or reference masks are fabricated.
+integration and UX polish. Phase 8 contains a controlled real-data RGB/thermal run on six fixed
+AAU VAP cases with generated masks, overlays, and metrics. Official SAM2 inference is blocked in
+the current environment and remains pending; no SAM2 results or fabricated values are included.
 
 ## Setup
 
@@ -68,26 +69,24 @@ pipeline behavior, strict evaluation metrics and alignment, typed experiment rec
 reconstruction/filter/derivative/Laplacian/local-frequency behavior, metadata, and the
 dashboard-compatible page-provider contract. They do not count as experimental validation.
 
-## Planned reproduction workflow
+## Phase 8 reproduction workflow
 
 An experiment run requires an explicit JSON configuration containing the user's input/reference
 paths. The runner never invents rows or metrics:
 
-    python scripts/run_experiments.py \
-      --config path/to/experiment_config.json \
+    python scripts/run_phase8_evidence.py \
+      --manifest data/experiment_manifest.json \
       --project-root . \
-      --output-json results/experiment_records.json \
-      --output-csv results/experiment_records.csv
+      --output-dir results
 
-See [docs/EXPERIMENTAL_RESULTS.md](docs/EXPERIMENTAL_RESULTS.md) for the configuration schema,
-reference-validation rules, and the empty results-table template. A pending reference produces a
-record with null metrics; it is never represented as a zero score.
+See [docs/EXPERIMENTAL_RESULTS.md](docs/EXPERIMENTAL_RESULTS.md) for provenance, the fixed
+selection rule, reference-validation rules, generated metrics, and evidence inventory. The
+general-purpose `scripts/run_experiments.py` remains available for new user manifests; a pending
+reference produces null metrics and is never represented as a zero score.
 
-User images will be supplied under the data directories or through the app. Large datasets,
-model checkpoints, and user-collected reference masks are not committed by default. A sample
-may be bundled only after its provenance and license/terms are verified. Until real images and
-reference masks exist, metrics and RGB-versus-thermal observations remain pending user data
-collection.
+Large datasets, model checkpoints, and user-collected reference masks are not committed by
+default. The Phase 8 sample provenance and source-label conversion are documented in
+[data/README.md](data/README.md) and the manifest.
 
 ## Architecture
 
