@@ -40,17 +40,21 @@ from module4.validation import (
     prepare_reference,
 )
 from module4.webapp._page import PageSpec
-from module4.webapp.ui import IMAGE_TYPES, pending_experiment_banner
+from module4.webapp.ui import IMAGE_TYPES, page_header, pending_experiment_banner, status_message
 from module4.visualization import bgr_to_rgb, display_mask, mask_overlap_bgr, to_display_uint8
 
 _MODULE = "Module 4"
 
 
 def _rgb_page() -> None:
-    st.header("RGB Human Boundary")
-    st.info(
-        "This page uses ROI-assisted classical OpenCV processing. You provide the rectangle "
-        "around the person; no machine learning or deep learning is used."
+    page_header(
+        "RGB Human Boundary",
+        assignment_label="Question 1",
+        summary=(
+            "Demonstrate ROI-assisted classical OpenCV human-boundary segmentation. You supply "
+            "the ROI; the final contour is derived from the final classical mask."
+        ),
+        input_hint="RGB color image (OpenCV BGR uint8).",
     )
     upload = st.file_uploader("RGB image", type=IMAGE_TYPES)
     if upload is None:
@@ -69,7 +73,8 @@ def _rgb_page() -> None:
         st.error("The image must be at least 2 x 2 pixels for ROI-assisted GrabCut.")
         return
 
-    st.subheader("User-provided ROI")
+    st.subheader("User-supplied ROI")
+    st.caption("Classical RGB processing is not automatic: the rectangle must be supplied around the person.")
     st.caption("The ROI is strict xywh: x and y are the upper-left pixel; width and height are pixels.")
     c1, c2, c3, c4 = st.columns(4)
     x = int(c1.number_input("x", min_value=0, max_value=width - 2, value=width // 4, step=1))
@@ -117,27 +122,32 @@ def _rgb_page() -> None:
         st.error(f"RGB segmentation could not run: {exc}")
         return
 
+    st.subheader("Processing sequence")
+    st.caption(
+        "Original → user ROI → GrabCut → morphology → selected component → final classical mask → "
+        "contour/boundary overlay"
+    )
     st.subheader("Classical OpenCV intermediate results")
     c1, c2, c3 = st.columns(3)
     with c1:
-        st.image(bgr_to_rgb(result.roi_overlay_bgr), caption="Original with user ROI", width="stretch")
+        st.image(bgr_to_rgb(result.roi_overlay_bgr), caption="Original RGB image with user ROI", width="stretch")
     with c2:
         st.image(to_display_uint8(result.grayscale), caption="Grayscale diagnostic", width="stretch")
     with c3:
-        st.image(display_mask(result.raw_foreground_mask), caption="Raw GrabCut foreground", width="stretch")
+        st.image(display_mask(result.raw_foreground_mask), caption="GrabCut raw foreground candidate", width="stretch")
     c1, c2, c3 = st.columns(3)
     with c1:
-        st.image(display_mask(result.cleaned_foreground_mask), caption="After morphology", width="stretch")
+        st.image(display_mask(result.cleaned_foreground_mask), caption="Morphology-cleaned foreground candidate", width="stretch")
     with c2:
-        st.image(display_mask(result.final_mask), caption="Selected final human mask", width="stretch")
+        st.image(display_mask(result.final_mask), caption="Final classical RGB mask", width="stretch")
     with c3:
-        st.image(bgr_to_rgb(result.boundary_overlay_bgr), caption="Final contour on original", width="stretch")
+        st.image(bgr_to_rgb(result.boundary_overlay_bgr), caption="Boundary overlay derived from final mask", width="stretch")
 
     if result.component_selection is None:
         st.warning("No valid foreground component was selected. The final mask is empty.")
     else:
         st.write(
-            f"Selected component label {result.component_selection.label}; "
+            f"Selected component from final classical mask: label {result.component_selection.label}; "
             f"area {result.component_selection.area} pixels; "
             f"ROI overlap {result.component_selection.roi_overlap} pixels."
         )
@@ -150,10 +160,17 @@ def _rgb_page() -> None:
 
 
 def _thermal_page() -> None:
-    st.header("Thermal Human Boundary")
-    st.info(
-        "This implementation uses classical OpenCV image processing only. Human/background "
-        "polarity is not assumed in advance; bright and dark Otsu candidates are both evaluated."
+    page_header(
+        "Thermal Human Boundary",
+        assignment_label="Question 2",
+        summary=(
+            "Evaluate bright and dark thermal foreground hypotheses with classical OpenCV "
+            "processing before selecting a cleaned component and boundary."
+        ),
+        input_hint=(
+            "Single-channel thermal/intensity image or supported false-color palette; palette "
+            "colors are not calibrated temperature."
+        ),
     )
     upload = st.file_uploader("Thermal or thermal-intensity image", type=IMAGE_TYPES)
     if upload is None:
@@ -175,9 +192,16 @@ def _thermal_page() -> None:
     except (TypeError, ValueError) as exc:
         st.error(f"Thermal source is not supported: {exc}")
         return
+    st.subheader("Source and optional ROI")
+    if image.ndim == 3 and image.shape[2] == 3:
+        st.warning("This input is a false-color BGR palette. Palette colors are not calibrated physical temperature.")
+    st.caption(
+        "Both bright and dark foreground hypotheses are evaluated; the selected polarity is a "
+        "transparent classical choice, not an assumption that the person is hotter."
+    )
     st.image(
         bgr_to_rgb(source_preview_bgr),
-        caption="Original source (display-only scaling; computational source is preserved)",
+        caption="Source thermal/intensity display (display-only scaling; computational source is preserved)",
         width="stretch",
     )
 
@@ -236,27 +260,32 @@ def _thermal_page() -> None:
     st.subheader("Classical thermal intermediate results")
     c1, c2, c3 = st.columns(3)
     with c1:
-        st.image(bgr_to_rgb(result.source_display_bgr), caption="Source for display", width="stretch")
+        st.image(bgr_to_rgb(result.source_display_bgr), caption="Source thermal/intensity display", width="stretch")
     with c2:
-        st.image(result.normalized_intensity, caption="Normalized intensity", width="stretch")
+        st.image(result.normalized_intensity, caption="Normalized thermal intensity", width="stretch")
     with c3:
-        st.image(result.enhanced_intensity, caption="Enhanced intensity", width="stretch")
+        st.image(result.enhanced_intensity, caption="Gaussian-enhanced thermal intensity", width="stretch")
     c1, c2, c3, c4 = st.columns(4)
     with c1:
-        st.image(display_mask(result.bright_raw_mask), caption=f"Bright Otsu raw (t={result.bright_otsu_threshold:.2f})", width="stretch")
+        st.image(display_mask(result.bright_raw_mask), caption=f"Bright Otsu candidate (t={result.bright_otsu_threshold:.2f})", width="stretch")
     with c2:
-        st.image(display_mask(result.dark_raw_mask), caption=f"Dark Otsu raw (t={result.dark_otsu_threshold:.2f})", width="stretch")
+        st.image(display_mask(result.dark_raw_mask), caption=f"Dark Otsu candidate (t={result.dark_otsu_threshold:.2f})", width="stretch")
     with c3:
-        st.image(display_mask(result.bright_cleaned_mask), caption="Bright after morphology", width="stretch")
+        st.image(display_mask(result.bright_cleaned_mask), caption="Bright candidate after morphology", width="stretch")
     with c4:
-        st.image(display_mask(result.dark_cleaned_mask), caption="Dark after morphology", width="stretch")
+        st.image(display_mask(result.dark_cleaned_mask), caption="Dark candidate after morphology", width="stretch")
     c1, c2, c3 = st.columns(3)
     with c1:
-        st.image(display_mask(result.final_mask), caption="Selected final mask", width="stretch")
+        st.image(display_mask(result.final_mask), caption="Final classical thermal mask", width="stretch")
     with c2:
-        st.image(bgr_to_rgb(result.boundary_overlay_bgr), caption="Final boundary overlay", width="stretch")
+        st.image(bgr_to_rgb(result.boundary_overlay_bgr), caption="Boundary overlay derived from final thermal mask", width="stretch")
     with c3:
-        st.write(f"Status: **{result.status}**")
+        status_message(
+            "Thermal pipeline",
+            "Implemented",
+            "Both bright and dark foreground hypotheses were evaluated before selecting the "
+            f"{result.selected_polarity or 'available'} classical component.",
+        )
         st.write(f"Selected polarity: **{result.selected_polarity or 'none'}**")
         if result.selected_component is not None:
             component = result.selected_component
@@ -354,7 +383,8 @@ def _sam2_configuration() -> SAM2Config:
 def _show_metrics(result_mask, reference_mask, *, reference_label: str, alignment: object) -> SegmentationMetrics:
     """Render the shared validated pixel-level comparison panel."""
     metrics = evaluate_masks(result_mask, reference_mask)
-    st.subheader("Validated comparison")
+    st.subheader("4. Validation, overlap, and metrics")
+    st.caption("Reference status: Available. Metrics use validated canonical masks.")
     c1, c2, c3 = st.columns(3)
     with c1:
         st.image(display_mask(reference_mask), caption=f"{reference_label} mask", width="stretch")
@@ -365,10 +395,11 @@ def _show_metrics(result_mask, reference_mask, *, reference_label: str, alignmen
             width="stretch",
         )
     with c3:
-        st.write(f"Reference: **{reference_label}**")
+        st.write(f"Reference type: **{reference_label}**")
+        st.write("Reference status: **Available**")
         st.write(f"Alignment: **{alignment.transformation if alignment else 'none'}**")
         st.write(f"Reference dimensions: **{reference_mask.shape[1]} x {reference_mask.shape[0]}**")
-    st.subheader("Pixel-level metrics")
+    st.subheader("IoU, Dice, Precision, Recall, and confusion counts")
     metric_columns = st.columns(4)
     for column, label, value in zip(
         metric_columns,
@@ -410,10 +441,20 @@ def _synthetic_fourier_example() -> np.ndarray:
 
 
 def _comparison_page() -> None:
-    st.header("Comparison and Evaluation")
-    st.info(
-        "Run one of the independent classical pipelines first, then provide a reference mask. "
-        "The reference is used only after segmentation and never changes the predicted mask."
+    page_header(
+        "Comparison and Evaluation",
+        assignment_label="Supporting evaluation",
+        summary=(
+            "Compare a completed classical mask with an uploaded reference mask or optional SAM2 "
+            "reference segmentation. Validation precedes overlap visualization and metrics."
+        ),
+        input_hint=(
+            "RGB or thermal image, plus an optional binary reference or optional SAM2 configuration."
+        ),
+    )
+    st.caption(
+        "Flow: classical mask → reference mask → validation → overlap visualization → "
+        "IoU/Dice/Precision/Recall and confusion counts."
     )
     modality_label = st.radio("Modality", ["RGB", "Thermal"], horizontal=True)
     modality = modality_label.lower()
@@ -441,7 +482,7 @@ def _comparison_page() -> None:
         if width < 2 or height < 2:
             st.error("The RGB image must be at least 2 x 2 pixels for ROI-assisted GrabCut.")
             return
-        st.subheader("RGB pipeline parameters")
+        st.subheader("1. Classical input and parameters")
         c1, c2, c3, c4 = st.columns(4)
         x = int(c1.number_input("ROI x", min_value=0, max_value=width - 2, value=width // 4, step=1))
         y = int(c2.number_input("ROI y", min_value=0, max_value=height - 2, value=height // 8, step=1))
@@ -478,12 +519,14 @@ def _comparison_page() -> None:
         except (TypeError, ValueError) as exc:
             st.error(f"Thermal source is not supported: {exc}")
             return
+        if source.ndim == 3 and source.shape[2] == 3:
+            st.warning("This input is a false-color BGR palette. Palette colors are not calibrated physical temperature.")
         st.image(
             bgr_to_rgb(source_preview),
             caption="Thermal source preview (display scaling only)",
             width="stretch",
         )
-        st.subheader("Thermal pipeline parameters")
+        st.subheader("1. Classical input and parameters")
         use_roi = st.checkbox("Use an optional ROI", value=False, key="comparison_thermal_use_roi")
         roi = None
         if use_roi:
@@ -521,7 +564,7 @@ def _comparison_page() -> None:
             closing_kernel_size=closing_size,
         )
 
-    st.subheader("Reference mask")
+    st.subheader("2. Reference selection")
     reference_source = st.radio(
         "Reference source",
         ["None", "Uploaded reference mask", "SAM2 reference"],
@@ -560,7 +603,21 @@ def _comparison_page() -> None:
             help="No resizing occurs unless this control is selected.",
         )
     elif reference_source == "SAM2 reference":
-        st.caption("SAM2 is an optional reference segmentation, not ground truth. It never changes the classical prediction.")
+        status_message(
+            "SAM2 integration",
+            "Implemented",
+            "The optional reference adapter is available without changing the classical pipeline.",
+        )
+        status_message(
+            "Real SAM2 reference inference",
+            "Pending",
+            "Configure the optional official environment and local checkpoint to generate a real "
+            "reference segmentation.",
+        )
+        st.caption(
+            "SAM2 is an optional reference segmentation, not ground truth. It never changes the "
+            "classical prediction."
+        )
         sam2_prompt = _sam2_prompt_controls(width, height, roi)
         sam2_config = _sam2_configuration()
 
@@ -577,16 +634,24 @@ def _comparison_page() -> None:
         st.error(f"Classical {modality_label.lower()} segmentation could not run: {exc}")
         return
 
-    st.subheader("Classical prediction")
-    st.image(display_mask(result.final_mask), caption="Predicted foreground mask", width="stretch")
-    st.image(bgr_to_rgb(result.boundary_overlay_bgr), caption="Predicted boundary overlay", width="stretch")
+    st.subheader("3. Classical mask")
+    st.image(display_mask(result.final_mask), caption="Final classical mask", width="stretch")
+    st.image(
+        bgr_to_rgb(result.boundary_overlay_bgr),
+        caption="Boundary overlay derived from final classical mask",
+        width="stretch",
+    )
     if modality == "thermal":
         st.write(f"Selected polarity: **{result.selected_polarity or 'none'}**; status: **{result.status}**")
     for warning in result.warnings:
         st.warning(warning)
 
     if reference_source == "None":
-        st.warning("Reference mask is pending; IoU, Dice, precision, recall, and confusion counts are unavailable.")
+        status_message(
+            "Reference status",
+            "Pending",
+            "Metrics are unavailable until a valid reference mask exists.",
+        )
         return
 
     if reference_source == "SAM2 reference":
@@ -602,16 +667,27 @@ def _comparison_page() -> None:
                 source_image_id=upload.name,
             )
         except (TypeError, ValueError) as exc:
-            st.error(f"SAM2 reference could not be prepared; metrics were not generated: {exc}")
+            status_message(
+                "SAM2 reference",
+                "Failed",
+                f"SAM2 reference could not be prepared; metrics were not generated: {exc}",
+            )
             return
         if sam2_result.status != "completed" or sam2_result.mask is None:
             if sam2_result.status == "failed":
-                st.error(f"SAM2 reference inference failed; metrics were not generated: {sam2_result.error}")
-            else:
-                st.warning(
-                    f"SAM2 reference is {sam2_result.status}; metrics were not generated. "
-                    f"{sam2_result.error or 'Configure the optional official SAM2 environment and checkpoint.'}"
+                status_message(
+                    "SAM2 reference",
+                    "Failed",
+                    f"SAM2 reference inference failed; metrics were not generated: {sam2_result.error}",
                 )
+            else:
+                status_message(
+                    "SAM2 reference",
+                    "Unavailable",
+                    f"SAM2 reference is {sam2_result.status}; metrics were not generated. "
+                    f"{sam2_result.error or 'Configure the optional official SAM2 environment and checkpoint.'}",
+                )
+                st.caption("No placeholder mask or metrics were generated.")
             return
         st.subheader("SAM2 reference provenance")
         st.write(
@@ -635,14 +711,22 @@ def _comparison_page() -> None:
             if prepared.mask is None:
                 raise ReferenceValidationError("SAM2 reference validation returned no mask")
         except (ReferenceValidationError, TypeError, ValueError) as exc:
-            st.error(f"SAM2 reference validation failed; metrics were not generated: {exc}")
+            status_message(
+                "SAM2 reference validation",
+                "Failed",
+                f"SAM2 reference validation failed; metrics were not generated: {exc}",
+            )
             return
         _show_metrics(result.final_mask, prepared.mask, reference_label="SAM2 reference segmentation", alignment=prepared.alignment)
         st.caption("Metrics compare the classical mask with the SAM2 reference segmentation; no ground-truth claim is made.")
         return
 
     if reference_upload is None:
-        st.warning("Uploaded reference mask is pending; IoU, Dice, precision, recall, and confusion counts are unavailable.")
+        status_message(
+            "Reference status",
+            "Pending",
+            "Uploaded reference mask is pending; IoU, Dice, Precision, Recall, and confusion counts are unavailable.",
+        )
         return
     try:
         reference = decode_image_unchanged(reference_upload.getvalue(), source_name=reference_upload.name)
@@ -669,7 +753,11 @@ def _comparison_page() -> None:
             alignment = prepared.alignment
         metrics = evaluate_masks(result.final_mask, reference_mask)
     except (ReferenceValidationError, TypeError, ValueError) as exc:
-        st.error(f"Reference validation failed; metrics were not generated: {exc}")
+        status_message(
+            "Reference validation",
+            "Failed",
+            f"Reference validation failed; metrics were not generated: {exc}",
+        )
         return
 
     _show_metrics(result.final_mask, reference_mask, reference_label=reference_type.replace("_", " "), alignment=alignment)
@@ -680,12 +768,20 @@ def _comparison_page() -> None:
 
 
 def _theory_page() -> None:
-    st.header("Question 3 — Fourier-Domain Edge Detection and Region Segmentation")
-    st.info(
-        "This page teaches Parts A–F and provides deterministic educational demonstrations. "
-        "Fourier responses are frequency-enhanced signals, not semantic human masks or empirical results."
+    page_header(
+        "Fourier-Domain Edge Detection and Region Segmentation",
+        assignment_label="Question 3",
+        summary=(
+            "Teach Fourier Parts A–F and provide deterministic educational demonstrations. "
+            "Frequency responses are not semantic human masks or empirical results."
+        ),
+        input_hint=(
+            "Optional scalar demonstration image; RGB uploads are explicitly converted to grayscale."
+        ),
     )
 
+    st.subheader("Theory")
+    st.caption("Parts A–F: equations, frequency interpretation, filtering, derivatives, Laplacian, and local analysis.")
     st.subheader("Part A — 2D Fourier representation")
     st.markdown(
         "`f(x,y)` is the scalar spatial image; `F(u,v)` is its frequency representation. "
@@ -703,6 +799,8 @@ def _theory_page() -> None:
         "to the display center; it changes layout only. The log magnitude below is display-only."
     )
 
+    st.subheader("Demonstration")
+    st.caption("Apply the theory to an uploaded scalar image or a deterministic educational example.")
     upload = st.file_uploader(
         "Optional scalar-image demonstration input",
         type=IMAGE_TYPES,
@@ -712,6 +810,11 @@ def _theory_page() -> None:
     if upload is None:
         scalar_image = _synthetic_fourier_example()
         source_label = "Deterministic educational example"
+        status_message(
+            "Demonstration status",
+            "Educational Demonstration",
+            "Synthetic smooth/striped input is deterministic and is not an empirical result.",
+        )
     else:
         try:
             source_bgr = decode_image_bgr(upload.getvalue(), source_name=upload.name)
@@ -720,7 +823,13 @@ def _theory_page() -> None:
         except (TypeError, ValueError) as exc:
             st.error(f"Could not read the Fourier demonstration image: {exc}")
             return
+        status_message(
+            "Demonstration status",
+            "Available",
+            "Uploaded input is used only for an educational Fourier response.",
+        )
     st.caption(f"{source_label}. Processing representation: finite float64 scalar intensity.")
+    st.subheader("Demonstration outputs")
     st.image(_fourier_display(scalar_image), caption="Scalar image used for Fourier analysis", width="stretch")
 
     spectrum_shifted = compute_fft2(scalar_image, shifted=True)
