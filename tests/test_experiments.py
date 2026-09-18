@@ -39,6 +39,30 @@ def test_runner_emits_pending_record_without_zero_metrics(tmp_path) -> None:
     assert "pending" in " ".join(record.warnings)
 
 
+def test_runner_records_unavailable_reference_metadata_without_metrics(tmp_path) -> None:
+    image_path = tmp_path / "thermal.png"
+    _write(image_path, np.full((8, 8), 40, dtype=np.uint8))
+
+    record = run_experiment_case(
+        {
+            "image_id": "thermal-02",
+            "modality": "thermal",
+            "input_path": "thermal.png",
+            "reference": {
+                "status": "unavailable",
+                "type": "sam2_reference",
+                "metadata": {"model_name": "sam2.1_hiera_tiny", "device": "cpu"},
+            },
+        },
+        project_root=tmp_path,
+    )
+
+    assert record.status == "reference_unavailable"
+    assert record.metrics is None
+    assert record.reference_metadata == {"model_name": "sam2.1_hiera_tiny", "device": "cpu"}
+    assert record.to_dict()["reference_metadata"]["device"] == "cpu"
+
+
 def test_runner_evaluates_available_reference_after_classical_processing(tmp_path) -> None:
     image_path = tmp_path / "thermal.png"
     reference_path = tmp_path / "reference.png"

@@ -49,6 +49,8 @@ data/reference/**
 *.onnx
 *.ckpt
 *.safetensors
+/checkpoints/
+/sam2_checkpoints/
 
 # Generated result and report artifacts. Keep directory placeholders tracked.
 results/rgb/**

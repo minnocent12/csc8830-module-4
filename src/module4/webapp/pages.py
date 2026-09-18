@@ -1,13 +1,27 @@
 """Module 4 Streamlit pages and the get_pages provider."""
 from __future__ import annotations
 
+import os
+
 import streamlit as st
 
 from module4.io_utils import decode_image_bgr, decode_image_unchanged
 from module4.metrics import evaluate_masks
+from module4.reference import (
+    bgr_to_sam2_rgb,
+    run_sam2_reference,
+    thermal_to_sam2_rgb,
+)
 from module4.rgb import run_rgb_segmentation
 from module4.thermal import run_thermal_segmentation, thermal_source_display_bgr
-from module4.types import ROI, RGBPipelineConfig, ThermalPipelineConfig
+from module4.types import (
+    ROI,
+    RGBPipelineConfig,
+    SAM2Config,
+    SAM2Prompt,
+    SegmentationMetrics,
+    ThermalPipelineConfig,
+)
 from module4.validation import (
     ReferenceValidationError,
     align_reference_mask,
@@ -247,6 +261,113 @@ def _thermal_page() -> None:
     )
 
 
+def _sam2_prompt_controls(width: int, height: int, classical_roi: ROI | None) -> SAM2Prompt | None:
+    """Collect an independent SAM2 box, optionally reusing the user's classical ROI."""
+    reuse_roi = st.checkbox(
+        "Reuse the same user-supplied rectangle for SAM2",
+        value=False,
+        key="comparison_sam2_reuse_roi",
+        help="This reuses the rectangle you supplied above; it is not derived from a classical mask or component.",
+    )
+    if reuse_roi:
+        if classical_roi is None:
+            st.warning("No classical ROI was supplied. Enter an independent SAM2 box instead.")
+        else:
+            st.caption("SAM2 and the classical pipeline will receive the same user-supplied rectangle.")
+            return SAM2Prompt(*classical_roi.as_tuple())
+
+    default_x = min(width - 1, max(0, width // 4))
+    default_y = min(height - 1, max(0, height // 4))
+    c1, c2, c3, c4 = st.columns(4)
+    prompt_x = int(c1.number_input("SAM2 prompt x", min_value=0, max_value=width - 1, value=default_x, step=1))
+    prompt_y = int(c2.number_input("SAM2 prompt y", min_value=0, max_value=height - 1, value=default_y, step=1))
+    prompt_width = int(
+        c3.number_input(
+            "SAM2 prompt width",
+            min_value=1,
+            max_value=width - prompt_x,
+            value=min(max(1, width // 2), width - prompt_x),
+            step=1,
+        )
+    )
+    prompt_height = int(
+        c4.number_input(
+            "SAM2 prompt height",
+            min_value=1,
+            max_value=height - prompt_y,
+            value=min(max(1, height // 2), height - prompt_y),
+            step=1,
+        )
+    )
+    return SAM2Prompt(prompt_x, prompt_y, prompt_width, prompt_height)
+
+
+def _sam2_configuration() -> SAM2Config:
+    """Collect optional SAM2 settings without making them base-application requirements."""
+    with st.expander("Optional SAM2 runtime configuration"):
+        model_name = st.selectbox(
+            "SAM2 model",
+            ["sam2.1_hiera_tiny", "sam2.1_hiera_small", "sam2.1_hiera_base_plus", "sam2.1_hiera_large"],
+            key="comparison_sam2_model",
+        )
+        config_names = {
+            "sam2.1_hiera_tiny": "sam2.1_hiera_t.yaml",
+            "sam2.1_hiera_small": "sam2.1_hiera_s.yaml",
+            "sam2.1_hiera_base_plus": "sam2.1_hiera_b+.yaml",
+            "sam2.1_hiera_large": "sam2.1_hiera_l.yaml",
+        }
+        default_config = f"configs/sam2.1/{config_names[model_name]}"
+        model_config = st.text_input("SAM2 model config", value=default_config, key="comparison_sam2_config")
+        checkpoint_path = st.text_input(
+            "Local SAM2 checkpoint path",
+            value=os.environ.get("MODULE4_SAM2_CHECKPOINT", ""),
+            key="comparison_sam2_checkpoint",
+            help="The base app never downloads a checkpoint. Use a local path from the separate official SAM2 environment.",
+        ).strip() or None
+        device = st.selectbox("SAM2 device", ["auto", "cpu", "cuda", "mps"], key="comparison_sam2_device")
+        implementation_version = st.text_input(
+            "SAM2 implementation version (optional)",
+            value="",
+            key="comparison_sam2_version",
+        ).strip() or None
+    return SAM2Config(
+        model_name=model_name,
+        model_config=model_config,
+        checkpoint_path=checkpoint_path,
+        implementation_version=implementation_version,
+        device=device,
+    )
+
+
+def _show_metrics(result_mask, reference_mask, *, reference_label: str, alignment: object) -> SegmentationMetrics:
+    """Render the shared validated pixel-level comparison panel."""
+    metrics = evaluate_masks(result_mask, reference_mask)
+    st.subheader("Validated comparison")
+    c1, c2, c3 = st.columns(3)
+    with c1:
+        st.image(display_mask(reference_mask), caption=f"{reference_label} mask", width="stretch")
+    with c2:
+        st.image(
+            bgr_to_rgb(mask_overlap_bgr(result_mask, reference_mask)),
+            caption="Overlap: TP green, FP red, FN blue",
+            width="stretch",
+        )
+    with c3:
+        st.write(f"Reference: **{reference_label}**")
+        st.write(f"Alignment: **{alignment.transformation if alignment else 'none'}**")
+        st.write(f"Reference dimensions: **{reference_mask.shape[1]} x {reference_mask.shape[0]}**")
+    st.subheader("Pixel-level metrics")
+    metric_columns = st.columns(4)
+    for column, label, value in zip(
+        metric_columns,
+        ("IoU", "Dice", "Precision", "Recall"),
+        (metrics.iou, metrics.dice, metrics.precision, metrics.recall),
+    ):
+        column.metric(label, f"{value:.4f}")
+    st.write(f"TP: **{metrics.tp}** | FP: **{metrics.fp}** | FN: **{metrics.fn}** | TN: **{metrics.tn}**")
+    return metrics
+
+
 def _comparison_page() -> None:
     st.header("Comparison and Evaluation")
     st.info(
@@ -360,35 +481,50 @@ def _comparison_page() -> None:
         )
 
     st.subheader("Reference mask")
-    reference_upload = st.file_uploader(
-        "Optional binary reference mask",
-        type=IMAGE_TYPES,
-        key="comparison_reference",
-        help="Accepted mask pixels are bool-equivalent uint8 values 0, 1, and 255. Other grayscale values are rejected.",
+    reference_source = st.radio(
+        "Reference source",
+        ["None", "Uploaded reference mask", "SAM2 reference"],
+        horizontal=True,
+        key="comparison_reference_source",
     )
-    reference_type = st.selectbox(
-        "Reference type",
-        ["ground_truth", "user_reference", "sam2_reference"],
-        format_func=lambda value: value.replace("_", " ").title(),
-        key="comparison_reference_type",
-    )
-    reference_image_id = st.text_input(
-        "Reference image ID",
-        value=upload.name,
-        key="comparison_reference_image_id",
-        help="Must match the input image ID exactly; this prevents cross-image comparisons.",
-    )
-    explicit_alignment = st.checkbox(
-        "Explicitly align a mismatched reference with nearest-neighbor resize",
-        value=False,
-        key="comparison_reference_alignment",
-        help="No resizing occurs unless this control is selected.",
-    )
-    if reference_type == "sam2_reference":
-        st.caption("This label records user-supplied provenance only. No SAM2 model is run in Phase 4.")
+    reference_upload = None
+    reference_type = None
+    reference_image_id = upload.name
+    explicit_alignment = False
+    sam2_prompt = None
+    sam2_config = None
+    if reference_source == "Uploaded reference mask":
+        reference_upload = st.file_uploader(
+            "Binary reference mask",
+            type=IMAGE_TYPES,
+            key="comparison_reference",
+            help="Accepted mask pixels are bool-equivalent uint8 values 0, 1, and 255. Other grayscale values are rejected.",
+        )
+        reference_type = st.selectbox(
+            "Reference type",
+            ["ground_truth", "user_reference"],
+            format_func=lambda value: value.replace("_", " ").title(),
+            key="comparison_reference_type",
+        )
+        reference_image_id = st.text_input(
+            "Reference image ID",
+            value=upload.name,
+            key="comparison_reference_image_id",
+            help="Must match the input image ID exactly; this prevents cross-image comparisons.",
+        )
+        explicit_alignment = st.checkbox(
+            "Explicitly align a mismatched reference with nearest-neighbor resize",
+            value=False,
+            key="comparison_reference_alignment",
+            help="No resizing occurs unless this control is selected.",
+        )
+    elif reference_source == "SAM2 reference":
+        st.caption("SAM2 is an optional reference segmentation, not ground truth. It never changes the classical prediction.")
+        sam2_prompt = _sam2_prompt_controls(width, height, roi)
+        sam2_config = _sam2_configuration()
 
-    if not st.button("Run classical pipeline and evaluate", type="primary"):
-        pending_experiment_banner("Run the classical pipeline to produce a prediction and evaluate it if a reference is supplied.")
+    if not st.button("Run classical pipeline and evaluate reference", type="primary"):
+        pending_experiment_banner("Run the classical pipeline to produce a prediction and evaluate the selected reference if available.")
         return
 
     try:
@@ -408,8 +544,64 @@ def _comparison_page() -> None:
     for warning in result.warnings:
         st.warning(warning)
 
-    if reference_upload is None:
+    if reference_source == "None":
         st.warning("Reference mask is pending; IoU, Dice, precision, recall, and confusion counts are unavailable.")
+        return
+
+    if reference_source == "SAM2 reference":
+        if sam2_prompt is None or sam2_config is None:
+            st.error("A valid independent SAM2 box prompt is required; no reference metrics were generated.")
+            return
+        try:
+            sam2_input = bgr_to_sam2_rgb(source) if modality == "rgb" else thermal_to_sam2_rgb(source)
+            sam2_result = run_sam2_reference(
+                sam2_input,
+                sam2_prompt,
+                config=sam2_config,
+                source_image_id=upload.name,
+            )
+        except (TypeError, ValueError) as exc:
+            st.error(f"SAM2 reference could not be prepared; metrics were not generated: {exc}")
+            return
+        if sam2_result.status != "completed" or sam2_result.mask is None:
+            if sam2_result.status == "failed":
+                st.error(f"SAM2 reference inference failed; metrics were not generated: {sam2_result.error}")
+            else:
+                st.warning(
+                    f"SAM2 reference is {sam2_result.status}; metrics were not generated. "
+                    f"{sam2_result.error or 'Configure the optional official SAM2 environment and checkpoint.'}"
+                )
+            return
+        st.subheader("SAM2 reference provenance")
+        st.write(
+            f"Model: **{sam2_result.model_name}** | config: **{sam2_result.model_config}** | "
+            f"checkpoint: **{sam2_result.checkpoint_identifier or 'not recorded'}** | device: **{sam2_result.device or 'not recorded'}**"
+        )
+        st.write(f"Prompt: **box XYWH {sam2_result.prompt}** | selection: **{sam2_result.selection_rule}**")
+        st.caption(
+            "The mask was selected using predictor-native SAM2 scores only. It is a reference segmentation, "
+            "not ground truth, and was canonicalized without resizing."
+        )
+        try:
+            prepared = prepare_reference(
+                sam2_result.mask,
+                expected_shape=result.final_mask.shape,
+                reference_status="available",
+                reference_type="sam2_reference",
+                image_id=upload.name,
+                reference_image_id=upload.name,
+            )
+            if prepared.mask is None:
+                raise ReferenceValidationError("SAM2 reference validation returned no mask")
+        except (ReferenceValidationError, TypeError, ValueError) as exc:
+            st.error(f"SAM2 reference validation failed; metrics were not generated: {exc}")
+            return
+        _show_metrics(result.final_mask, prepared.mask, reference_label="SAM2 reference segmentation", alignment=prepared.alignment)
+        st.caption("Metrics compare the classical mask with the SAM2 reference segmentation; no ground-truth claim is made.")
+        return
+
+    if reference_upload is None:
+        st.warning("Uploaded reference mask is pending; IoU, Dice, precision, recall, and confusion counts are unavailable.")
         return
     try:
         reference = decode_image_unchanged(reference_upload.getvalue(), source_name=reference_upload.name)
@@ -439,30 +631,10 @@ def _comparison_page() -> None:
         st.error(f"Reference validation failed; metrics were not generated: {exc}")
         return
 
-    st.subheader("Validated comparison")
-    c1, c2, c3 = st.columns(3)
-    with c1:
-        st.image(display_mask(reference_mask), caption="Validated reference mask", width="stretch")
-    with c2:
-        st.image(bgr_to_rgb(mask_overlap_bgr(result.final_mask, reference_mask)), caption="Overlap: TP green, FP red, FN blue", width="stretch")
-    with c3:
-        st.write(f"Reference type: **{reference_type.replace('_', ' ')}**")
-        st.write(f"Alignment: **{alignment.transformation if alignment else 'none'}**")
-        st.write(f"Reference dimensions: **{reference_mask.shape[1]} x {reference_mask.shape[0]}**")
-    st.subheader("Pixel-level metrics")
-    metric_columns = st.columns(4)
-    for column, label, value in zip(
-        metric_columns,
-        ("IoU", "Dice", "Precision", "Recall"),
-        (metrics.iou, metrics.dice, metrics.precision, metrics.recall),
-    ):
-        column.metric(label, f"{value:.4f}")
-    st.write(
-        f"TP: **{metrics.tp}** | FP: **{metrics.fp}** | FN: **{metrics.fn}** | TN: **{metrics.tn}**"
-    )
+    _show_metrics(result.final_mask, reference_mask, reference_label=reference_type.replace("_", " "), alignment=alignment)
     st.caption(
         "All metrics use aligned canonical masks. A reference is metadata/provenance input, not a "
-        "segmentation input; no SAM2 inference or Fourier processing is performed here."
+        "segmentation input; SAM2 is optional and Fourier processing remains out of scope for this phase."
     )
 
 

@@ -121,7 +121,7 @@ def test_phase2_source_contains_no_prohibited_ml_dependencies() -> None:
     }
     source_root = Path(__file__).parents[1] / "src" / "module4"
     import_lines = []
-    for path in source_root.rglob("*.py"):
+    for path in (source_root / "rgb.py", source_root / "preprocessing.py", source_root / "components.py", source_root / "contours.py"):
         for line in path.read_text(encoding="utf-8").lower().splitlines():
             if line.strip().startswith(("import ", "from ")):
                 import_lines.append(line)

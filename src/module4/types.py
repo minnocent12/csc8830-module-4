@@ -12,6 +12,7 @@ ThermalPolarity = Literal["bright", "dark"]
 ThermalStatus = Literal["selected", "ambiguous", "weak", "constant", "empty"]
 ReferenceType = Literal["ground_truth", "sam2_reference", "user_reference"]
 EvaluationReferenceStatus = Literal["available", "pending", "failed"]
+SAM2ReferenceStatus = Literal["unavailable", "pending", "ready", "completed", "failed"]
 
 
 @dataclass(frozen=True)
@@ -208,3 +209,55 @@ class ReferenceValidation:
     mask: np.ndarray | None
     alignment: AlignmentMetadata | None
     warnings: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class SAM2Prompt:
+    """An independently supplied XYWH box prompt for SAM2."""
+
+    x: int
+    y: int
+    width: int
+    height: int
+
+    def as_xyxy(self) -> tuple[int, int, int, int]:
+        """Return the prompt in the XYXY convention used by the official image predictor."""
+        return self.x, self.y, self.x + self.width, self.y + self.height
+
+
+@dataclass(frozen=True)
+class SAM2Config:
+    """Optional SAM2 runtime configuration; no SAM2 dependency is imported at module load."""
+
+    model_name: str = "sam2.1_hiera_tiny"
+    model_config: str = "configs/sam2.1/sam2.1_hiera_t.yaml"
+    checkpoint_path: str | None = None
+    checkpoint_source: str | None = None
+    implementation_source: str = "https://github.com/facebookresearch/sam2"
+    implementation_version: str | None = None
+    device: str = "auto"
+
+
+@dataclass(frozen=True)
+class SAM2ReferenceResult:
+    """Public SAM2 adapter output with no internal model or tensor objects."""
+
+    status: SAM2ReferenceStatus
+    mask: np.ndarray | None
+    model_name: str
+    model_config: str
+    checkpoint_identifier: str | None
+    checkpoint_source: str | None
+    implementation_source: str
+    implementation_version: str | None
+    device: str | None
+    prompt_type: str | None
+    prompt: SAM2Prompt | None
+    source_image_id: str | None
+    source_dimensions: tuple[int, int] | None
+    selected_mask_index: int | None
+    predictor_scores: tuple[float, ...]
+    selection_rule: str | None
+    provenance: Mapping[str, str | int | float | None]
+    warnings: tuple[str, ...]
+    error: str | None
