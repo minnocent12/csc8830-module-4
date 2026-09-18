@@ -88,6 +88,21 @@ Large datasets, model checkpoints, and user-collected reference masks are not co
 default. The Phase 8 sample provenance and source-label conversion are documented in
 [data/README.md](data/README.md) and the manifest.
 
+## Phase 9 report and demonstration preparation
+
+The final report and demonstration materials are prepared from the tracked implementation and
+Phase 8 records. Build the primary Word report with:
+
+    python scripts/build_report.py --project-root . \
+      --output deliverables/Module_4_Final_Report.docx
+
+The report is accompanied by [docs/DEMO_SCRIPT.md](docs/DEMO_SCRIPT.md) and
+[docs/DEMO_CHECKLIST.md](docs/DEMO_CHECKLIST.md). The primary report covers Questions 1–3,
+the six fixed real-data records, machine-readable result tables, evidence figures, limitations,
+reproducibility, and the repository link. The assignment-required PDF export is retained as a
+secondary format when generated from the reviewed Word document. Real SAM2 inference, video
+recording, and final submission packaging remain pending; no SAM2 results are included.
+
 ## Architecture
 
     app.py
