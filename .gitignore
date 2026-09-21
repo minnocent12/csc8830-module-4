@@ -70,6 +70,13 @@ docs/report/figures/**
 !results/comparisons/*.md
 !docs/report/figures/*.png
 
+# Local-only submission packaging and preparation files.
+/deliverables/
+/scripts/build_report.py
+/docs/DEMO_SCRIPT.md
+/docs/DEMO_CHECKLIST.md
+/docs/SUBMISSION_READINESS.md
+
 # Phase 8 keeps only the small, derived evidence images and serialized records.
 !results/rgb/aau-vap-*.png
 !results/thermal/aau-vap-*.png

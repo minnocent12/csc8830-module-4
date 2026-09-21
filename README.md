@@ -88,26 +88,14 @@ Large datasets, model checkpoints, and user-collected reference masks are not co
 default. The Phase 8 sample provenance and source-label conversion are documented in
 [data/README.md](data/README.md) and the manifest.
 
-## Phase 9 report and demonstration preparation
+## Final submission packaging
 
-The final report and demonstration materials are prepared from the tracked implementation and
-Phase 8 records. Build the primary Word report with:
-
-    python scripts/build_report.py --project-root . \
-      --output deliverables/Module_4_Final_Report.docx
-
-The report is accompanied by [docs/DEMO_SCRIPT.md](docs/DEMO_SCRIPT.md) and
-[docs/DEMO_CHECKLIST.md](docs/DEMO_CHECKLIST.md). The primary report covers Questions 1–3,
-the six fixed real-data records, machine-readable result tables, evidence figures, limitations,
-reproducibility, and the repository link. The assignment-required PDF export is retained as a
-secondary format when generated from the reviewed Word document. Real SAM2 inference, video
-recording, and final submission packaging remain pending; no SAM2 results are included.
-
-## Final submission artifacts
-
-- Editable/master report: [deliverables/Module_4_Final_Report.docx](deliverables/Module_4_Final_Report.docx)
-- Required PDF documentation: [deliverables/Module_4_Final_Report.pdf](deliverables/Module_4_Final_Report.pdf)
-- Final readiness audit: [docs/SUBMISSION_READINESS.md](docs/SUBMISSION_READINESS.md)
+The final Word report, PDF export, demonstration recording, and local submission-preparation
+notes are maintained outside version control. The `deliverables/` directory, report builder, demo
+notes, and readiness audit are intentionally ignored so the public repository contains the
+implementation, reproducibility scripts, technical documentation, tests, and traceable
+experiment evidence. The final PDF and demonstration video are submitted separately through the
+course workflow.
 
 ## Architecture
 
@@ -117,7 +105,7 @@ recording, and final submission packaging remain pending; no SAM2 results are in
       webapp/             PageSpec provider and Streamlit UI
     data/                 user or verified sample inputs
     results/              derived masks, overlays, comparisons, and metrics
-    docs/                 methods, theory, results, report, and demo notes
+    docs/                 methods, theory, results, and technical documentation
     tests/                deterministic automated tests
 
 Core processing will remain importable without Streamlit and will be reused by scripts and the
