@@ -84,6 +84,27 @@ def test_native_score_selection_is_deterministic_and_does_not_mutate_masks() -> 
     np.testing.assert_array_equal(masks, original)
 
 
+def test_native_score_selection_accepts_official_float_binary_masks() -> None:
+    masks = np.array(
+        [
+            [[0.0, 1.0], [1.0, 0.0]],
+            [[1.0, 1.0], [0.0, 0.0]],
+        ],
+        dtype=np.float32,
+    )
+
+    selected, index, scores = select_sam2_mask(
+        masks,
+        np.array([0.4, 0.8]),
+        expected_shape=(2, 2),
+    )
+
+    assert index == 1
+    assert scores == (0.4, 0.8)
+    assert selected.dtype == np.bool_
+    np.testing.assert_array_equal(selected, masks[1].astype(bool))
+
+
 def test_selection_rejects_logits_and_shape_mismatch() -> None:
     with pytest.raises(ValueError, match="binary"):
         select_sam2_mask(np.array([[[0.2, 0.8], [0.1, 0.9]]]), np.array([0.5]), expected_shape=(2, 2))

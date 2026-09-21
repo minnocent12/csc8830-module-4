@@ -1,0 +1,56 @@
+[
+  {
+    "experiment_id": "aau-vap-scene1-00085-rgb",
+    "artifacts": {
+      "sam2_mask": "results/rgb/aau-vap-scene1-00085-rgb_sam2_mask.png",
+      "classical_vs_sam2": "results/comparisons/aau-vap-scene1-00085-rgb_classical_vs_sam2.png",
+      "sam2_vs_ground_truth": "results/comparisons/aau-vap-scene1-00085-rgb_sam2_vs_ground_truth.png",
+      "frozen_classical_mask": "results/rgb/aau-vap-scene1-00085-rgb_classical_mask.png"
+    }
+  },
+  {
+    "experiment_id": "aau-vap-scene1-00085-thermal",
+    "artifacts": {
+      "sam2_mask": "results/thermal/aau-vap-scene1-00085-thermal_sam2_mask.png",
+      "classical_vs_sam2": "results/comparisons/aau-vap-scene1-00085-thermal_classical_vs_sam2.png",
+      "sam2_vs_ground_truth": "results/comparisons/aau-vap-scene1-00085-thermal_sam2_vs_ground_truth.png",
+      "frozen_classical_mask": "results/thermal/aau-vap-scene1-00085-thermal_classical_mask.png"
+    }
+  },
+  {
+    "experiment_id": "aau-vap-scene1-00135-rgb",
+    "artifacts": {
+      "sam2_mask": "results/rgb/aau-vap-scene1-00135-rgb_sam2_mask.png",
+      "classical_vs_sam2": "results/comparisons/aau-vap-scene1-00135-rgb_classical_vs_sam2.png",
+      "sam2_vs_ground_truth": "results/comparisons/aau-vap-scene1-00135-rgb_sam2_vs_ground_truth.png",
+      "frozen_classical_mask": "results/rgb/aau-vap-scene1-00135-rgb_classical_mask.png"
+    }
+  },
+  {
+    "experiment_id": "aau-vap-scene1-00135-thermal",
+    "artifacts": {
+      "sam2_mask": "results/thermal/aau-vap-scene1-00135-thermal_sam2_mask.png",
+      "classical_vs_sam2": "results/comparisons/aau-vap-scene1-00135-thermal_classical_vs_sam2.png",
+      "sam2_vs_ground_truth": "results/comparisons/aau-vap-scene1-00135-thermal_sam2_vs_ground_truth.png",
+      "frozen_classical_mask": "results/thermal/aau-vap-scene1-00135-thermal_classical_mask.png"
+    }
+  },
+  {
+    "experiment_id": "aau-vap-scene1-00185-rgb",
+    "artifacts": {
+      "sam2_mask": "results/rgb/aau-vap-scene1-00185-rgb_sam2_mask.png",
+      "classical_vs_sam2": "results/comparisons/aau-vap-scene1-00185-rgb_classical_vs_sam2.png",
+      "sam2_vs_ground_truth": "results/comparisons/aau-vap-scene1-00185-rgb_sam2_vs_ground_truth.png",
+      "frozen_classical_mask": "results/rgb/aau-vap-scene1-00185-rgb_classical_mask.png"
+    }
+  },
+  {
+    "experiment_id": "aau-vap-scene1-00185-thermal",
+    "artifacts": {
+      "sam2_mask": "results/thermal/aau-vap-scene1-00185-thermal_sam2_mask.png",
+      "classical_vs_sam2": "results/comparisons/aau-vap-scene1-00185-thermal_classical_vs_sam2.png",
+      "sam2_vs_ground_truth": "results/comparisons/aau-vap-scene1-00185-thermal_sam2_vs_ground_truth.png",
+      "frozen_classical_mask": "results/thermal/aau-vap-scene1-00185-thermal_classical_mask.png"
+    }
+  }
+]
