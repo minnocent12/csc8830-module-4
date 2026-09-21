@@ -20,7 +20,13 @@ existing dataset-ground-truth results.
 
 ## Setup
 
-Python 3.10 or newer is required.
+Clone the independent Module 4 repository and enter its directory:
+
+    git clone https://github.com/minnocent12/csc8830-module-4.git
+    cd csc8830-module-4
+
+Python 3.10 or newer is required. Create and activate a virtual environment, then install the
+development dependencies:
 
     python3 -m venv .venv
     source .venv/bin/activate
@@ -111,15 +117,6 @@ Phase 8 classical-versus-dataset-ground-truth records. See
 [docs/EXPERIMENTAL_RESULTS.md](docs/EXPERIMENTAL_RESULTS.md) and
 [docs/SAM2_COMPARISON.md](docs/SAM2_COMPARISON.md) for the actual recorded setup and results.
 
-## Final submission packaging
-
-The final Word report, PDF export, demonstration recording, and local submission-preparation
-notes are maintained outside version control. The `deliverables/` directory, report builder, demo
-notes, and readiness audit are intentionally ignored so the public repository contains the
-implementation, reproducibility scripts, technical documentation, tests, and traceable
-experiment evidence. The final PDF and demonstration video are submitted separately through the
-course workflow.
-
 ## Architecture
 
     app.py
@@ -136,15 +133,29 @@ web app. Module 4 has no runtime dependency on Module 2 or Module 3.
 
 ## Optional shared dashboard
 
-When multiple independent module repositories are placed beside one another, a host can mount
-Module 4 with:
+This repository is independently runnable and gradable. To place it beside another module for a
+shared dashboard, create a parent workspace and clone the independent repositories into it:
+
+    mkdir csc8830-workspace
+    cd csc8830-workspace
+    git clone https://github.com/minnocent12/csc8830-module-3.git
+    git clone https://github.com/minnocent12/csc8830-module-4.git
+
+The parent workspace can install both modules into one virtual environment:
+
+    python -m venv .venv
+    source .venv/bin/activate
+    python -m pip install -U pip
+    python -m pip install -e csc8830-module-3
+    python -m pip install -e csc8830-module-4
+
+A host dashboard mounts Module 4 through its page provider:
 
     from module4.webapp.pages import get_pages
 
-The host should add Module_4/src to its import path and adapt page objects by their
-module_label, page_label, order, and render attributes. The course root dashboard already has
-this structural compatibility shape. The standalone Module 4 app remains the recommended
-grading path.
+The host should load each module's `src` directory and adapt page objects by their `module_label`,
+`page_label`, `order`, and `render` attributes. The course root dashboard already has this
+structural compatibility shape. The standalone Module 4 app remains the recommended grading path.
 
 ## Limitations and integrity notes
 
@@ -158,5 +169,5 @@ grading path.
   ground-truth evidence.
 - Reference masks are not segmentation inputs. The classical prediction is completed before a
   reference is loaded or evaluated.
-- No claim of experimental accuracy, robustness, or RGB-versus-thermal superiority will be made
-  before actual user experiments.
+- The recorded six-case results are descriptive evidence for the stated procedure, not claims of
+  experimental accuracy, robustness, generalization, or RGB-versus-thermal superiority.
