@@ -33,6 +33,32 @@ class SAM2ReferenceError(ValueError):
     """Raised for invalid SAM2 prompt or output data."""
 
 
+def _canonicalize_sam2_mask(mask: np.ndarray) -> np.ndarray:
+    """Canonicalize an official SAM2 binary mask without thresholding logits.
+
+    The official image predictor can return ``float32`` arrays containing exactly 0.0 and
+    1.0 even when ``return_logits=False``. Those values are an explicit binary encoding, so
+    they are converted to uint8 before passing through the project's strict mask validator.
+    Arbitrary floating-point values remain rejected as logits or grayscale data.
+    """
+    if isinstance(mask, np.ndarray) and mask.dtype.kind == "f":
+        if not np.isfinite(mask).all():
+            raise SAM2ReferenceError("SAM2 mask contains non-finite values")
+        values = np.unique(mask)
+        if not np.isin(values, np.array([0.0, 1.0], dtype=mask.dtype)).all():
+            raise SAM2ReferenceError(
+                "SAM2 floating-point masks must be binary and contain only 0.0 and 1.0"
+            )
+        mask = mask.astype(np.uint8, copy=False)
+    try:
+        return canonicalize_mask(mask, name="SAM2 reference mask")
+    except (TypeError, ValueError) as exc:
+        raise SAM2ReferenceError(
+            "SAM2 must return a binary bool/uint8 mask, or an exact float 0.0/1.0 mask, "
+            "when return_logits=False"
+        ) from exc
+
+
 def validate_box_prompt(prompt: SAM2Prompt, image_shape: tuple[int, ...]) -> SAM2Prompt:
     """Validate an independently supplied XYWH box against an image shape."""
     if not isinstance(prompt, SAM2Prompt):
@@ -80,12 +106,7 @@ def select_sam2_mask(
     if score_array.shape[0] != mask_array.shape[0] or not np.isfinite(score_array).all():
         raise SAM2ReferenceError("SAM2 predictor scores must be finite and match the mask count")
     index = int(np.argmax(score_array))
-    try:
-        selected = canonicalize_mask(mask_array[index], name="SAM2 reference mask")
-    except (TypeError, ValueError) as exc:
-        raise SAM2ReferenceError(
-            "SAM2 must return a binary bool/uint8 mask when return_logits=False"
-        ) from exc
+    selected = _canonicalize_sam2_mask(mask_array[index])
     if selected.shape != expected_shape:
         raise ReferenceValidationError(
             f"SAM2 reference mask shape {selected.shape} does not match source shape {expected_shape}"

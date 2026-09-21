@@ -297,8 +297,9 @@ def _thermal_page() -> None:
         st.warning(warning)
     st.caption(
         "Use Comparison and Evaluation to upload a reference and compute validated pixel-level "
-        "metrics. SAM2 inference and empirical RGB-versus-thermal conclusions remain pending "
-        "real data. Fourier theory is available on the Fourier Theory page."
+        "metrics. The tracked Phase 8 records contain six fixed real-data classical and official "
+        "SAM2 reference comparisons; the optional SAM2 runtime still requires its isolated "
+        "environment and local checkpoint. Fourier theory is available on the Fourier Theory page."
     )
 
 
@@ -610,7 +611,7 @@ def _comparison_page() -> None:
         )
         status_message(
             "Real SAM2 reference inference",
-            "Pending",
+            "Available (optional)",
             "Configure the optional official environment and local checkpoint to generate a real "
             "reference segmentation.",
         )

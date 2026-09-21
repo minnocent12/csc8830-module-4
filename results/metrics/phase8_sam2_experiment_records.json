@@ -1,0 +1,821 @@
+[
+  {
+    "experiment_id": "aau-vap-scene1-00085-rgb",
+    "image_id": "aau-vap-scene1-frame-00085",
+    "modality": "rgb",
+    "method": "official_sam2_reference",
+    "source_image": "data/rgb/aau_vap_scene1_00085.jpg",
+    "source_dimensions": [
+      480,
+      640
+    ],
+    "source_dtype": "uint8",
+    "reference_type": "sam2_reference",
+    "reference_status": "completed",
+    "reference_image": "results/rgb/aau-vap-scene1-00085-rgb_sam2_mask.png",
+    "reference_dimensions": [
+      480,
+      640
+    ],
+    "dataset_ground_truth": {
+      "reference_type": "ground_truth",
+      "reference_image": "data/reference/aau_vap_scene1_00085_rgb_mask_binary.png",
+      "reference_image_id": "aau-vap-scene1-frame-00085",
+      "metrics_for_sam2": {
+        "iou": 0.6204736281161455,
+        "dice": 0.7657929352882672,
+        "precision": 0.9895936981757877,
+        "recall": 0.6245486420011513,
+        "tp": 47738,
+        "fp": 502,
+        "fn": 28698,
+        "tn": 230262,
+        "prediction_foreground_pixels": 48240,
+        "reference_foreground_pixels": 76436
+      },
+      "metrics_for_frozen_classical": {
+        "iou": 0.4894921359879065,
+        "dice": 0.6572604502718647,
+        "precision": 0.4905713898899512,
+        "recall": 0.9955256685331519,
+        "tp": 76094,
+        "fp": 79019,
+        "fn": 342,
+        "tn": 151745,
+        "prediction_foreground_pixels": 155113,
+        "reference_foreground_pixels": 76436
+      }
+    },
+    "prompt": {
+      "source": "predefined manifest ROI supplied independently as a SAM2 box",
+      "xywh": [
+        120,
+        20,
+        450,
+        460
+      ],
+      "xyxy": [
+        120,
+        20,
+        570,
+        480
+      ],
+      "derived_from_classical_mask": false
+    },
+    "sam2": {
+      "implementation_source": "https://github.com/facebookresearch/sam2",
+      "implementation_version": "2b90b9f5ceec907a1c18123530e92e794ad901a",
+      "model_name": "sam2.1_hiera_tiny",
+      "model_config": "configs/sam2.1/sam2.1_hiera_t.yaml",
+      "checkpoint_identifier": "sam2.1_hiera_tiny.pt",
+      "checkpoint_source": "https://dl.fbaipublicfiles.com/segment_anything_2/092824/sam2.1_hiera_tiny.pt",
+      "device": "mps",
+      "selected_mask_index": 2,
+      "native_scores": [
+        0.10097575932741165,
+        0.07556341588497162,
+        0.8512049913406372
+      ],
+      "selection_rule": "highest predictor-provided SAM2 quality score; first index on ties",
+      "mask_dimensions": [
+        480,
+        640
+      ],
+      "mask_dtype": "bool",
+      "foreground_pixels": 48240,
+      "thermal_representation": null,
+      "prompt_source": "predefined manifest ROI supplied independently as a SAM2 box"
+    },
+    "comparisons": {
+      "classical_vs_sam2": {
+        "iou": 0.3088726547163132,
+        "dice": 0.4719674654418671,
+        "precision": 0.3093744560417244,
+        "recall": 0.994776119402985,
+        "tp": 47988,
+        "fp": 107125,
+        "fn": 252,
+        "tn": 151835,
+        "prediction_foreground_pixels": 155113,
+        "reference_foreground_pixels": 48240
+      },
+      "sam2_vs_dataset_ground_truth": {
+        "iou": 0.6204736281161455,
+        "dice": 0.7657929352882672,
+        "precision": 0.9895936981757877,
+        "recall": 0.6245486420011513,
+        "tp": 47738,
+        "fp": 502,
+        "fn": 28698,
+        "tn": 230262,
+        "prediction_foreground_pixels": 48240,
+        "reference_foreground_pixels": 76436
+      }
+    },
+    "frozen_classical_phase8_metrics": {
+      "iou": 0.4894921359879065,
+      "dice": 0.6572604502718647,
+      "precision": 0.4905713898899512,
+      "recall": 0.9955256685331519,
+      "tp": 76094,
+      "fp": 79019,
+      "fn": 342,
+      "tn": 151745,
+      "prediction_foreground_pixels": 155113,
+      "reference_foreground_pixels": 76436
+    },
+    "artifacts": {
+      "sam2_mask": "results/rgb/aau-vap-scene1-00085-rgb_sam2_mask.png",
+      "classical_vs_sam2": "results/comparisons/aau-vap-scene1-00085-rgb_classical_vs_sam2.png",
+      "sam2_vs_ground_truth": "results/comparisons/aau-vap-scene1-00085-rgb_sam2_vs_ground_truth.png",
+      "frozen_classical_mask": "results/rgb/aau-vap-scene1-00085-rgb_classical_mask.png"
+    },
+    "warnings": [
+      "SAM2 is a reference segmentation, not dataset ground truth."
+    ],
+    "status": "completed"
+  },
+  {
+    "experiment_id": "aau-vap-scene1-00085-thermal",
+    "image_id": "aau-vap-scene1-frame-00085",
+    "modality": "thermal",
+    "method": "official_sam2_reference",
+    "source_image": "data/thermal/aau_vap_scene1_00085.jpg",
+    "source_dimensions": [
+      480,
+      640
+    ],
+    "source_dtype": "uint8",
+    "reference_type": "sam2_reference",
+    "reference_status": "completed",
+    "reference_image": "results/thermal/aau-vap-scene1-00085-thermal_sam2_mask.png",
+    "reference_dimensions": [
+      480,
+      640
+    ],
+    "dataset_ground_truth": {
+      "reference_type": "ground_truth",
+      "reference_image": "data/reference/aau_vap_scene1_00085_thermal_mask_binary.png",
+      "reference_image_id": "aau-vap-scene1-frame-00085",
+      "metrics_for_sam2": {
+        "iou": 0.8112874566355208,
+        "dice": 0.8958130347156414,
+        "precision": 0.9352200206225789,
+        "recall": 0.8595927254098361,
+        "tp": 67117,
+        "fp": 4649,
+        "fn": 10963,
+        "tn": 224471,
+        "prediction_foreground_pixels": 71766,
+        "reference_foreground_pixels": 78080
+      },
+      "metrics_for_frozen_classical": {
+        "iou": 0.04166859428547026,
+        "dice": 0.08000355298040394,
+        "precision": 0.054553840992955384,
+        "recall": 0.14996157786885245,
+        "tp": 11709,
+        "fp": 202923,
+        "fn": 66371,
+        "tn": 26197,
+        "prediction_foreground_pixels": 214632,
+        "reference_foreground_pixels": 78080
+      }
+    },
+    "prompt": {
+      "source": "predefined manifest ROI supplied independently as a SAM2 box",
+      "xywh": [
+        120,
+        20,
+        450,
+        460
+      ],
+      "xyxy": [
+        120,
+        20,
+        570,
+        480
+      ],
+      "derived_from_classical_mask": false
+    },
+    "sam2": {
+      "implementation_source": "https://github.com/facebookresearch/sam2",
+      "implementation_version": "2b90b9f5ceec907a1c18123530e92e794ad901a",
+      "model_name": "sam2.1_hiera_tiny",
+      "model_config": "configs/sam2.1/sam2.1_hiera_t.yaml",
+      "checkpoint_identifier": "sam2.1_hiera_tiny.pt",
+      "checkpoint_source": "https://dl.fbaipublicfiles.com/segment_anything_2/092824/sam2.1_hiera_tiny.pt",
+      "device": "mps",
+      "selected_mask_index": 2,
+      "native_scores": [
+        0.6234896183013916,
+        0.5587518215179443,
+        0.7222510576248169
+      ],
+      "selection_rule": "highest predictor-provided SAM2 quality score; first index on ties",
+      "mask_dimensions": [
+        480,
+        640
+      ],
+      "mask_dtype": "bool",
+      "foreground_pixels": 71766,
+      "thermal_representation": "thermal_source_display_rgb; false-color display representation, not calibrated temperature",
+      "prompt_source": "predefined manifest ROI supplied independently as a SAM2 box"
+    },
+    "comparisons": {
+      "classical_vs_sam2": {
+        "iou": 0.029197945902045833,
+        "dice": 0.05673922303926703,
+        "precision": 0.03785549219128555,
+        "recall": 0.11321517152969372,
+        "tp": 8125,
+        "fp": 206507,
+        "fn": 63641,
+        "tn": 28927,
+        "prediction_foreground_pixels": 214632,
+        "reference_foreground_pixels": 71766
+      },
+      "sam2_vs_dataset_ground_truth": {
+        "iou": 0.8112874566355208,
+        "dice": 0.8958130347156414,
+        "precision": 0.9352200206225789,
+        "recall": 0.8595927254098361,
+        "tp": 67117,
+        "fp": 4649,
+        "fn": 10963,
+        "tn": 224471,
+        "prediction_foreground_pixels": 71766,
+        "reference_foreground_pixels": 78080
+      }
+    },
+    "frozen_classical_phase8_metrics": {
+      "iou": 0.04166859428547026,
+      "dice": 0.08000355298040394,
+      "precision": 0.054553840992955384,
+      "recall": 0.14996157786885245,
+      "tp": 11709,
+      "fp": 202923,
+      "fn": 66371,
+      "tn": 26197,
+      "prediction_foreground_pixels": 214632,
+      "reference_foreground_pixels": 78080
+    },
+    "artifacts": {
+      "sam2_mask": "results/thermal/aau-vap-scene1-00085-thermal_sam2_mask.png",
+      "classical_vs_sam2": "results/comparisons/aau-vap-scene1-00085-thermal_classical_vs_sam2.png",
+      "sam2_vs_ground_truth": "results/comparisons/aau-vap-scene1-00085-thermal_sam2_vs_ground_truth.png",
+      "frozen_classical_mask": "results/thermal/aau-vap-scene1-00085-thermal_classical_mask.png"
+    },
+    "warnings": [
+      "SAM2 is a reference segmentation, not dataset ground truth.",
+      "Thermal input was rendered as an RGB display representation; physical temperature was not inferred."
+    ],
+    "status": "completed"
+  },
+  {
+    "experiment_id": "aau-vap-scene1-00135-rgb",
+    "image_id": "aau-vap-scene1-frame-00135",
+    "modality": "rgb",
+    "method": "official_sam2_reference",
+    "source_image": "data/rgb/aau_vap_scene1_00135.jpg",
+    "source_dimensions": [
+      480,
+      640
+    ],
+    "source_dtype": "uint8",
+    "reference_type": "sam2_reference",
+    "reference_status": "completed",
+    "reference_image": "results/rgb/aau-vap-scene1-00135-rgb_sam2_mask.png",
+    "reference_dimensions": [
+      480,
+      640
+    ],
+    "dataset_ground_truth": {
+      "reference_type": "ground_truth",
+      "reference_image": "data/reference/aau_vap_scene1_00135_rgb_mask_binary.png",
+      "reference_image_id": "aau-vap-scene1-frame-00135",
+      "metrics_for_sam2": {
+        "iou": 0.5815629923139352,
+        "dice": 0.7354281747109783,
+        "precision": 0.9202644003777148,
+        "recall": 0.6124223914737451,
+        "tp": 24364,
+        "fp": 2111,
+        "fn": 15419,
+        "tn": 265306,
+        "prediction_foreground_pixels": 26475,
+        "reference_foreground_pixels": 39783
+      },
+      "metrics_for_frozen_classical": {
+        "iou": 0.3606639503039209,
+        "dice": 0.5301293537222945,
+        "precision": 0.3929767103347889,
+        "recall": 0.814342809742855,
+        "tp": 32397,
+        "fp": 50043,
+        "fn": 7386,
+        "tn": 217374,
+        "prediction_foreground_pixels": 82440,
+        "reference_foreground_pixels": 39783
+      }
+    },
+    "prompt": {
+      "source": "predefined manifest ROI supplied independently as a SAM2 box",
+      "xywh": [
+        80,
+        80,
+        350,
+        400
+      ],
+      "xyxy": [
+        80,
+        80,
+        430,
+        480
+      ],
+      "derived_from_classical_mask": false
+    },
+    "sam2": {
+      "implementation_source": "https://github.com/facebookresearch/sam2",
+      "implementation_version": "2b90b9f5ceec907a1c18123530e92e794ad901a",
+      "model_name": "sam2.1_hiera_tiny",
+      "model_config": "configs/sam2.1/sam2.1_hiera_t.yaml",
+      "checkpoint_identifier": "sam2.1_hiera_tiny.pt",
+      "checkpoint_source": "https://dl.fbaipublicfiles.com/segment_anything_2/092824/sam2.1_hiera_tiny.pt",
+      "device": "mps",
+      "selected_mask_index": 2,
+      "native_scores": [
+        0.3696504533290863,
+        0.2507953345775604,
+        0.46122026443481445
+      ],
+      "selection_rule": "highest predictor-provided SAM2 quality score; first index on ties",
+      "mask_dimensions": [
+        480,
+        640
+      ],
+      "mask_dtype": "bool",
+      "foreground_pixels": 26475,
+      "thermal_representation": null,
+      "prompt_source": "predefined manifest ROI supplied independently as a SAM2 box"
+    },
+    "comparisons": {
+      "classical_vs_sam2": {
+        "iou": 0.3103817510256626,
+        "dice": 0.4737272184731212,
+        "precision": 0.3129306162057254,
+        "recall": 0.9744287063267233,
+        "tp": 25798,
+        "fp": 56642,
+        "fn": 677,
+        "tn": 224083,
+        "prediction_foreground_pixels": 82440,
+        "reference_foreground_pixels": 26475
+      },
+      "sam2_vs_dataset_ground_truth": {
+        "iou": 0.5815629923139352,
+        "dice": 0.7354281747109783,
+        "precision": 0.9202644003777148,
+        "recall": 0.6124223914737451,
+        "tp": 24364,
+        "fp": 2111,
+        "fn": 15419,
+        "tn": 265306,
+        "prediction_foreground_pixels": 26475,
+        "reference_foreground_pixels": 39783
+      }
+    },
+    "frozen_classical_phase8_metrics": {
+      "iou": 0.3606639503039209,
+      "dice": 0.5301293537222945,
+      "precision": 0.3929767103347889,
+      "recall": 0.814342809742855,
+      "tp": 32397,
+      "fp": 50043,
+      "fn": 7386,
+      "tn": 217374,
+      "prediction_foreground_pixels": 82440,
+      "reference_foreground_pixels": 39783
+    },
+    "artifacts": {
+      "sam2_mask": "results/rgb/aau-vap-scene1-00135-rgb_sam2_mask.png",
+      "classical_vs_sam2": "results/comparisons/aau-vap-scene1-00135-rgb_classical_vs_sam2.png",
+      "sam2_vs_ground_truth": "results/comparisons/aau-vap-scene1-00135-rgb_sam2_vs_ground_truth.png",
+      "frozen_classical_mask": "results/rgb/aau-vap-scene1-00135-rgb_classical_mask.png"
+    },
+    "warnings": [
+      "SAM2 is a reference segmentation, not dataset ground truth."
+    ],
+    "status": "completed"
+  },
+  {
+    "experiment_id": "aau-vap-scene1-00135-thermal",
+    "image_id": "aau-vap-scene1-frame-00135",
+    "modality": "thermal",
+    "method": "official_sam2_reference",
+    "source_image": "data/thermal/aau_vap_scene1_00135.jpg",
+    "source_dimensions": [
+      480,
+      640
+    ],
+    "source_dtype": "uint8",
+    "reference_type": "sam2_reference",
+    "reference_status": "completed",
+    "reference_image": "results/thermal/aau-vap-scene1-00135-thermal_sam2_mask.png",
+    "reference_dimensions": [
+      480,
+      640
+    ],
+    "dataset_ground_truth": {
+      "reference_type": "ground_truth",
+      "reference_image": "data/reference/aau_vap_scene1_00135_thermal_mask_binary.png",
+      "reference_image_id": "aau-vap-scene1-frame-00135",
+      "metrics_for_sam2": {
+        "iou": 0.5681670069948299,
+        "dice": 0.7246256354846307,
+        "precision": 0.8290541397235958,
+        "recall": 0.6435619202283408,
+        "tp": 26155,
+        "fp": 5393,
+        "fn": 14486,
+        "tn": 261166,
+        "prediction_foreground_pixels": 31548,
+        "reference_foreground_pixels": 40641
+      },
+      "metrics_for_frozen_classical": {
+        "iou": 0.020591348150529855,
+        "dice": 0.04035179837227619,
+        "precision": 0.023280912151288063,
+        "recall": 0.15127580522132822,
+        "tp": 6148,
+        "fp": 257931,
+        "fn": 34493,
+        "tn": 8628,
+        "prediction_foreground_pixels": 264079,
+        "reference_foreground_pixels": 40641
+      }
+    },
+    "prompt": {
+      "source": "predefined manifest ROI supplied independently as a SAM2 box",
+      "xywh": [
+        80,
+        80,
+        350,
+        400
+      ],
+      "xyxy": [
+        80,
+        80,
+        430,
+        480
+      ],
+      "derived_from_classical_mask": false
+    },
+    "sam2": {
+      "implementation_source": "https://github.com/facebookresearch/sam2",
+      "implementation_version": "2b90b9f5ceec907a1c18123530e92e794ad901a",
+      "model_name": "sam2.1_hiera_tiny",
+      "model_config": "configs/sam2.1/sam2.1_hiera_t.yaml",
+      "checkpoint_identifier": "sam2.1_hiera_tiny.pt",
+      "checkpoint_source": "https://dl.fbaipublicfiles.com/segment_anything_2/092824/sam2.1_hiera_tiny.pt",
+      "device": "mps",
+      "selected_mask_index": 2,
+      "native_scores": [
+        0.6512833833694458,
+        0.6952213644981384,
+        0.8290589451789856
+      ],
+      "selection_rule": "highest predictor-provided SAM2 quality score; first index on ties",
+      "mask_dimensions": [
+        480,
+        640
+      ],
+      "mask_dtype": "bool",
+      "foreground_pixels": 31548,
+      "thermal_representation": "thermal_source_display_rgb; false-color display representation, not calibrated temperature",
+      "prompt_source": "predefined manifest ROI supplied independently as a SAM2 box"
+    },
+    "comparisons": {
+      "classical_vs_sam2": {
+        "iou": 0.016885779346308107,
+        "dice": 0.03321076897577014,
+        "precision": 0.018589134312080854,
+        "recall": 0.15560415874223404,
+        "tp": 4909,
+        "fp": 259170,
+        "fn": 26639,
+        "tn": 16482,
+        "prediction_foreground_pixels": 264079,
+        "reference_foreground_pixels": 31548
+      },
+      "sam2_vs_dataset_ground_truth": {
+        "iou": 0.5681670069948299,
+        "dice": 0.7246256354846307,
+        "precision": 0.8290541397235958,
+        "recall": 0.6435619202283408,
+        "tp": 26155,
+        "fp": 5393,
+        "fn": 14486,
+        "tn": 261166,
+        "prediction_foreground_pixels": 31548,
+        "reference_foreground_pixels": 40641
+      }
+    },
+    "frozen_classical_phase8_metrics": {
+      "iou": 0.020591348150529855,
+      "dice": 0.04035179837227619,
+      "precision": 0.023280912151288063,
+      "recall": 0.15127580522132822,
+      "tp": 6148,
+      "fp": 257931,
+      "fn": 34493,
+      "tn": 8628,
+      "prediction_foreground_pixels": 264079,
+      "reference_foreground_pixels": 40641
+    },
+    "artifacts": {
+      "sam2_mask": "results/thermal/aau-vap-scene1-00135-thermal_sam2_mask.png",
+      "classical_vs_sam2": "results/comparisons/aau-vap-scene1-00135-thermal_classical_vs_sam2.png",
+      "sam2_vs_ground_truth": "results/comparisons/aau-vap-scene1-00135-thermal_sam2_vs_ground_truth.png",
+      "frozen_classical_mask": "results/thermal/aau-vap-scene1-00135-thermal_classical_mask.png"
+    },
+    "warnings": [
+      "SAM2 is a reference segmentation, not dataset ground truth.",
+      "Thermal input was rendered as an RGB display representation; physical temperature was not inferred."
+    ],
+    "status": "completed"
+  },
+  {
+    "experiment_id": "aau-vap-scene1-00185-rgb",
+    "image_id": "aau-vap-scene1-frame-00185",
+    "modality": "rgb",
+    "method": "official_sam2_reference",
+    "source_image": "data/rgb/aau_vap_scene1_00185.jpg",
+    "source_dimensions": [
+      480,
+      640
+    ],
+    "source_dtype": "uint8",
+    "reference_type": "sam2_reference",
+    "reference_status": "completed",
+    "reference_image": "results/rgb/aau-vap-scene1-00185-rgb_sam2_mask.png",
+    "reference_dimensions": [
+      480,
+      640
+    ],
+    "dataset_ground_truth": {
+      "reference_type": "ground_truth",
+      "reference_image": "data/reference/aau_vap_scene1_00185_rgb_mask_binary.png",
+      "reference_image_id": "aau-vap-scene1-frame-00185",
+      "metrics_for_sam2": {
+        "iou": 0.7733121003008013,
+        "dice": 0.8721669470023092,
+        "precision": 0.9766632613970119,
+        "recall": 0.7878702034509399,
+        "tp": 30593,
+        "fp": 731,
+        "fn": 8237,
+        "tn": 267639,
+        "prediction_foreground_pixels": 31324,
+        "reference_foreground_pixels": 38830
+      },
+      "metrics_for_frozen_classical": {
+        "iou": 0.4183244112528363,
+        "dice": 0.5898853716877388,
+        "precision": 0.4222874552449574,
+        "recall": 0.9780582024208087,
+        "tp": 37978,
+        "fp": 51956,
+        "fn": 852,
+        "tn": 216414,
+        "prediction_foreground_pixels": 89934,
+        "reference_foreground_pixels": 38830
+      }
+    },
+    "prompt": {
+      "source": "predefined manifest ROI supplied independently as a SAM2 box",
+      "xywh": [
+        50,
+        60,
+        350,
+        420
+      ],
+      "xyxy": [
+        50,
+        60,
+        400,
+        480
+      ],
+      "derived_from_classical_mask": false
+    },
+    "sam2": {
+      "implementation_source": "https://github.com/facebookresearch/sam2",
+      "implementation_version": "2b90b9f5ceec907a1c18123530e92e794ad901a",
+      "model_name": "sam2.1_hiera_tiny",
+      "model_config": "configs/sam2.1/sam2.1_hiera_t.yaml",
+      "checkpoint_identifier": "sam2.1_hiera_tiny.pt",
+      "checkpoint_source": "https://dl.fbaipublicfiles.com/segment_anything_2/092824/sam2.1_hiera_tiny.pt",
+      "device": "mps",
+      "selected_mask_index": 2,
+      "native_scores": [
+        0.21299757063388824,
+        0.136642724275589,
+        0.755983829498291
+      ],
+      "selection_rule": "highest predictor-provided SAM2 quality score; first index on ties",
+      "mask_dimensions": [
+        480,
+        640
+      ],
+      "mask_dtype": "bool",
+      "foreground_pixels": 31324,
+      "thermal_representation": null,
+      "prompt_source": "predefined manifest ROI supplied independently as a SAM2 box"
+    },
+    "comparisons": {
+      "classical_vs_sam2": {
+        "iou": 0.33669183707214906,
+        "dice": 0.5037688235003052,
+        "precision": 0.3396157181933418,
+        "recall": 0.9750670412463287,
+        "tp": 30543,
+        "fp": 59391,
+        "fn": 781,
+        "tn": 216485,
+        "prediction_foreground_pixels": 89934,
+        "reference_foreground_pixels": 31324
+      },
+      "sam2_vs_dataset_ground_truth": {
+        "iou": 0.7733121003008013,
+        "dice": 0.8721669470023092,
+        "precision": 0.9766632613970119,
+        "recall": 0.7878702034509399,
+        "tp": 30593,
+        "fp": 731,
+        "fn": 8237,
+        "tn": 267639,
+        "prediction_foreground_pixels": 31324,
+        "reference_foreground_pixels": 38830
+      }
+    },
+    "frozen_classical_phase8_metrics": {
+      "iou": 0.4183244112528363,
+      "dice": 0.5898853716877388,
+      "precision": 0.4222874552449574,
+      "recall": 0.9780582024208087,
+      "tp": 37978,
+      "fp": 51956,
+      "fn": 852,
+      "tn": 216414,
+      "prediction_foreground_pixels": 89934,
+      "reference_foreground_pixels": 38830
+    },
+    "artifacts": {
+      "sam2_mask": "results/rgb/aau-vap-scene1-00185-rgb_sam2_mask.png",
+      "classical_vs_sam2": "results/comparisons/aau-vap-scene1-00185-rgb_classical_vs_sam2.png",
+      "sam2_vs_ground_truth": "results/comparisons/aau-vap-scene1-00185-rgb_sam2_vs_ground_truth.png",
+      "frozen_classical_mask": "results/rgb/aau-vap-scene1-00185-rgb_classical_mask.png"
+    },
+    "warnings": [
+      "SAM2 is a reference segmentation, not dataset ground truth."
+    ],
+    "status": "completed"
+  },
+  {
+    "experiment_id": "aau-vap-scene1-00185-thermal",
+    "image_id": "aau-vap-scene1-frame-00185",
+    "modality": "thermal",
+    "method": "official_sam2_reference",
+    "source_image": "data/thermal/aau_vap_scene1_00185.jpg",
+    "source_dimensions": [
+      480,
+      640
+    ],
+    "source_dtype": "uint8",
+    "reference_type": "sam2_reference",
+    "reference_status": "completed",
+    "reference_image": "results/thermal/aau-vap-scene1-00185-thermal_sam2_mask.png",
+    "reference_dimensions": [
+      480,
+      640
+    ],
+    "dataset_ground_truth": {
+      "reference_type": "ground_truth",
+      "reference_image": "data/reference/aau_vap_scene1_00185_thermal_mask_binary.png",
+      "reference_image_id": "aau-vap-scene1-frame-00185",
+      "metrics_for_sam2": {
+        "iou": 0.6716853298202691,
+        "dice": 0.8036025893611033,
+        "precision": 0.8648190216568227,
+        "recall": 0.7504796950979103,
+        "tp": 28552,
+        "fp": 4463,
+        "fn": 9493,
+        "tn": 264692,
+        "prediction_foreground_pixels": 33015,
+        "reference_foreground_pixels": 38045
+      },
+      "metrics_for_frozen_classical": {
+        "iou": 0.020987901209879013,
+        "dice": 0.041112928341282357,
+        "precision": 0.023471570958916364,
+        "recall": 0.1655145222762518,
+        "tp": 6297,
+        "fp": 261985,
+        "fn": 31748,
+        "tn": 7170,
+        "prediction_foreground_pixels": 268282,
+        "reference_foreground_pixels": 38045
+      }
+    },
+    "prompt": {
+      "source": "predefined manifest ROI supplied independently as a SAM2 box",
+      "xywh": [
+        50,
+        60,
+        350,
+        420
+      ],
+      "xyxy": [
+        50,
+        60,
+        400,
+        480
+      ],
+      "derived_from_classical_mask": false
+    },
+    "sam2": {
+      "implementation_source": "https://github.com/facebookresearch/sam2",
+      "implementation_version": "2b90b9f5ceec907a1c18123530e92e794ad901a",
+      "model_name": "sam2.1_hiera_tiny",
+      "model_config": "configs/sam2.1/sam2.1_hiera_t.yaml",
+      "checkpoint_identifier": "sam2.1_hiera_tiny.pt",
+      "checkpoint_source": "https://dl.fbaipublicfiles.com/segment_anything_2/092824/sam2.1_hiera_tiny.pt",
+      "device": "mps",
+      "selected_mask_index": 2,
+      "native_scores": [
+        0.6093007922172546,
+        0.7229150533676147,
+        0.7583223581314087
+      ],
+      "selection_rule": "highest predictor-provided SAM2 quality score; first index on ties",
+      "mask_dimensions": [
+        480,
+        640
+      ],
+      "mask_dtype": "bool",
+      "foreground_pixels": 33015,
+      "thermal_representation": "thermal_source_display_rgb; false-color display representation, not calibrated temperature",
+      "prompt_source": "predefined manifest ROI supplied independently as a SAM2 box"
+    },
+    "comparisons": {
+      "classical_vs_sam2": {
+        "iou": 0.02000074478061133,
+        "dice": 0.03921711799320936,
+        "precision": 0.022021604132964567,
+        "recall": 0.17894896259276086,
+        "tp": 5908,
+        "fp": 262374,
+        "fn": 27107,
+        "tn": 11811,
+        "prediction_foreground_pixels": 268282,
+        "reference_foreground_pixels": 33015
+      },
+      "sam2_vs_dataset_ground_truth": {
+        "iou": 0.6716853298202691,
+        "dice": 0.8036025893611033,
+        "precision": 0.8648190216568227,
+        "recall": 0.7504796950979103,
+        "tp": 28552,
+        "fp": 4463,
+        "fn": 9493,
+        "tn": 264692,
+        "prediction_foreground_pixels": 33015,
+        "reference_foreground_pixels": 38045
+      }
+    },
+    "frozen_classical_phase8_metrics": {
+      "iou": 0.020987901209879013,
+      "dice": 0.041112928341282357,
+      "precision": 0.023471570958916364,
+      "recall": 0.1655145222762518,
+      "tp": 6297,
+      "fp": 261985,
+      "fn": 31748,
+      "tn": 7170,
+      "prediction_foreground_pixels": 268282,
+      "reference_foreground_pixels": 38045
+    },
+    "artifacts": {
+      "sam2_mask": "results/thermal/aau-vap-scene1-00185-thermal_sam2_mask.png",
+      "classical_vs_sam2": "results/comparisons/aau-vap-scene1-00185-thermal_classical_vs_sam2.png",
+      "sam2_vs_ground_truth": "results/comparisons/aau-vap-scene1-00185-thermal_sam2_vs_ground_truth.png",
+      "frozen_classical_mask": "results/thermal/aau-vap-scene1-00185-thermal_classical_mask.png"
+    },
+    "warnings": [
+      "SAM2 is a reference segmentation, not dataset ground truth.",
+      "Thermal input was rendered as an RGB display representation; physical temperature was not inferred."
+    ],
+    "status": "completed"
+  }
+]

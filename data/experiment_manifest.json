@@ -13,9 +13,19 @@
     "notes": "The dataset supplies aligned RGB and thermal frames and pixel-level people masks. Thermal files are false-color image representations; they are not calibrated temperature arrays."
   },
   "sam2": {
-    "status": "blocked",
+    "status": "completed",
     "official_source": "https://github.com/facebookresearch/sam2",
-    "notes": "The local environment lacks the official SAM2 package, PyTorch, and a checkpoint. No SAM2 mask or SAM2 metric is claimed in this manifest's experiment output."
+    "implementation_version": "2b90b9f5ceec907a1c18123530e92e794ad901a4",
+    "model_name": "sam2.1_hiera_tiny",
+    "model_config": "configs/sam2.1/sam2.1_hiera_t.yaml",
+    "checkpoint_identifier": "sam2.1_hiera_tiny.pt",
+    "checkpoint_source": "https://dl.fbaipublicfiles.com/segment_anything_2/092824/sam2.1_hiera_tiny.pt",
+    "checkpoint_sha256": "7402e0d864fa82708a20fbd15bc84245c2f26dff0eb43a4b5b93452deb34be69",
+    "checkpoint_size_bytes": 156008466,
+    "device": "mps",
+    "prompt_strategy": "predefined manifest ROI supplied independently as a SAM2 box; candidate selected by highest predictor-native score",
+    "evidence_records": "results/metrics/phase8_sam2_experiment_records.json",
+    "notes": "Official SAM2.1 Hiera Tiny inference completed for the fixed six-case RGB/thermal evidence set. The checkpoint remains local and ignored. Thermal inputs are rendered false-color RGB representations, not calibrated temperature arrays."
   },
   "cases": [
     {

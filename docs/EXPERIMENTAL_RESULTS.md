@@ -3,7 +3,8 @@
 This document records the controlled Phase 8 experiment run. Claims are classified explicitly:
 the runner and artifact exporter are **implemented**; the automated tests and artifact/metric
 consistency checks are **tested**; the six fixed AAU VAP cases below are **experimentally
-validated** only for this dataset subset and procedure; SAM2 inference is **pending user setup**.
+validated** only for this dataset subset and procedure; the six official SAM2 reference runs are
+**experimentally validated** only for this fixed prompt/model/device procedure.
 No generalization, timing, or RGB-versus-thermal superiority claim is made.
 
 ## Dataset, provenance, and selection
@@ -180,14 +181,31 @@ warning plus a border-touching-component caution on each case. These are observa
 stored records, not broad performance claims. The summary's descriptive means are provided only
 to describe this N=3 subset; they should not be reported as dataset-wide estimates.
 
-## SAM2 status
+## Official SAM2 reference status
 
 The official SAM2 source is [facebookresearch/sam2](https://github.com/facebookresearch/sam2).
-Phase 8 verified that this local Python 3.13 environment has neither PyTorch nor the official
-`sam2` package, and no official checkpoint is present. The official runtime was therefore blocked
-before inference; no SAM2 mask, score, timing value, or metric is claimed. Checkpoints remain
-outside the repository. A future run may use only the official implementation and record its
-model/config/checkpoint/device/prompt provenance separately as a `sam2_reference`.
+Genuine inference was completed with the official checkout at commit
+`2b90b9f5ceec907a1c18123530e92e794ad901a4`, SAM2.1 Hiera Tiny, config
+`configs/sam2.1/sam2.1_hiera_t.yaml`, and the official `sam2.1_hiera_tiny.pt` checkpoint. The
+isolated runtime used Python 3.12.10, PyTorch 2.14.0, TorchVision 0.29.0, and Apple MPS. CUDA
+was unavailable; MPS was verified before inference.
+
+The fixed prompt strategy used the manifest ROI as an independently predefined SAM2 box for all
+six existing cases: frames 00085, 00135, and 00185 in RGB and thermal. The three returned masks
+were selected using the highest SAM2-native predictor score only. No classical mask, metric,
+dataset ground-truth mask, or visual preference influenced prompt or candidate selection.
+
+Additional SAM2 evidence is serialized in:
+
+- `results/metrics/phase8_sam2_experiment_records.json`
+- `results/metrics/phase8_sam2_experiment_records.csv`
+- `results/metrics/phase8_sam2_experiment_summary.md`
+
+The existing Phase 8 dataset-ground-truth records remain unchanged. SAM2 masks are labeled
+`sam2_reference`, not `ground_truth`. Thermal SAM2 input is a rendered false-color RGB
+representation and does not imply calibrated temperature understanding. Complete provenance,
+native scores, prompts, masks, comparisons, and metrics are in the SAM2 records and
+`docs/SAM2_COMPARISON.md`.
 
 Phase 5's isolated SAM2 adapter, Phase 6's Fourier Parts A–F theory, and Phase 7's Streamlit
 integration remain implemented/tested components. They are not substitutes for Phase 8's real

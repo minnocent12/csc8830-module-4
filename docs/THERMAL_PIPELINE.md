@@ -10,9 +10,9 @@ The implementation uses NumPy and OpenCV only: input validation, finite min/max 
 optional Gaussian denoising, dual-polarity Otsu thresholding, morphology, connected components,
 deterministic scoring, external contours, and copy-based visualization. There is no ML/DL
 dependency, SAM2 inference, Fourier implementation, dataset result, or fabricated experiment
-claim in the Phase 3 pipeline. Phase 4 adds evaluation infrastructure around this pipeline, but
-SAM2 comparison and empirical RGB-versus-thermal observations remain pending later approved
-phases and real user data.
+claim in the Phase 3 pipeline. Phase 4 adds evaluation infrastructure around this pipeline. The
+tracked Phase 8 evidence separately records provenance-verified RGB/thermal experiments and
+official SAM2 reference comparisons; those results do not change this classical pipeline.
 
 The pipeline should be described as **ROI-assisted classical human segmentation** when an ROI is
 provided, or as **classical thermal intensity segmentation with transparent geometry heuristics**
@@ -156,11 +156,11 @@ images have status `constant`. A selected border-touching component adds a cauti
 `False` is background and `True` is foreground in every computational mask. Display masks use
 uint8 values 0 and 255. Contours do not replace the mask, and the overlay is drawn on a copy.
 
-## Limitations and pending work
+## Limitations and experiment scope
 
 Otsu thresholding and simple component geometry are scene-dependent. The pipeline evaluates both
 foreground polarities, but that does not prove that either candidate is a human. No reliability,
-accuracy, robustness, or RGB-versus-thermal superiority claim is made here. Real thermal images,
-reference masks, SAM2 comparison, and experiment conclusions require later approved work and
-actual user-collected or provenance-verified data. Phase 4's metrics are available only when a
-user supplies a validated reference; no experiment rows are bundled here.
+accuracy, robustness, or RGB-versus-thermal superiority claim is made here. The recorded Phase 8
+experiment is limited to the fixed provenance-verified subset and its documented parameters.
+SAM2 remains a separate reference segmentation rather than ground truth. Phase 4's metrics are
+also available interactively when a user supplies a validated reference.

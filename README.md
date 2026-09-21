@@ -13,8 +13,10 @@ validation and pixel-level evaluation, Phase 5 implements an isolated optional o
 reference adapter plus comparison workflow, Phase 6 implements the Fourier Parts A–F theory and
 deterministic educational demonstrations, and Phase 7 completes assignment-wide Streamlit
 integration and UX polish. Phase 8 contains a controlled real-data RGB/thermal run on six fixed
-AAU VAP cases with generated masks, overlays, and metrics. Official SAM2 inference is blocked in
-the current environment and remains pending; no SAM2 results or fabricated values are included.
+AAU VAP cases with generated masks, overlays, and metrics. Official SAM2.1 Hiera Tiny inference
+has now completed for the same six cases in an isolated official environment using Apple MPS; the
+additional masks, native scores, comparisons, and provenance are stored separately from the
+existing dataset-ground-truth results.
 
 ## Setup
 
@@ -55,10 +57,10 @@ The standalone app does not require SAM2.
 
 The base installation intentionally does not install PyTorch or SAM2. The optional adapter uses
 a separate official `facebookresearch/sam2` checkout/environment. Follow the official SAM2
-installation instructions, keep the checkpoint outside this repository, and set
-`MODULE4_SAM2_CHECKPOINT` to its local path before using the SAM2 option in Comparison and
-Evaluation. The exact API, model/config choices, provenance fields, and pending real-inference
-status are documented in [docs/SAM2_COMPARISON.md](docs/SAM2_COMPARISON.md).
+installation instructions, keep the checkpoint in the ignored local `checkpoints/` directory or
+outside this repository, and set `MODULE4_SAM2_CHECKPOINT` to its local path before using the SAM2
+option in Comparison and Evaluation. The exact API, model/config, checkpoint, prompt provenance,
+and completed evidence are documented in [docs/SAM2_COMPARISON.md](docs/SAM2_COMPARISON.md).
 
 ## Run tests
 
@@ -87,6 +89,27 @@ reference produces null metrics and is never represented as a zero score.
 Large datasets, model checkpoints, and user-collected reference masks are not committed by
 default. The Phase 8 sample provenance and source-label conversion are documented in
 [data/README.md](data/README.md) and the manifest.
+
+## Phase 8 official SAM2 evidence
+
+Run the fixed six-case SAM2 comparison from an isolated environment containing the official SAM2
+package, PyTorch, TorchVision, and OpenCV:
+
+    PYTHONPATH="$PWD/src" python scripts/run_sam2_phase8_evidence.py \
+      --manifest data/experiment_manifest.json \
+      --project-root . \
+      --output-dir results \
+      --checkpoint checkpoints/sam2.1_hiera_tiny.pt \
+      --model-name sam2.1_hiera_tiny \
+      --model-config configs/sam2.1/sam2.1_hiera_t.yaml \
+      --device mps \
+      --implementation-version <official-sam2-commit>
+
+The exporter uses the six unchanged manifest cases and supplies each predefined manifest ROI
+independently as a SAM2 box. It selects masks only by SAM2-native score and preserves the original
+Phase 8 classical-versus-dataset-ground-truth records. See
+[docs/EXPERIMENTAL_RESULTS.md](docs/EXPERIMENTAL_RESULTS.md) and
+[docs/SAM2_COMPARISON.md](docs/SAM2_COMPARISON.md) for the actual recorded setup and results.
 
 ## Final submission packaging
 
@@ -131,8 +154,8 @@ grading path.
   considers both bright and dark foreground polarity.
 - SAM2 is an optional reference segmentation, never ground truth. Its adapter is isolated under
   `src/module4/reference/`, has no base dependency, and does not influence either classical
-  pipeline. Real SAM2 inference remains pending until a separate official environment and local
-  checkpoint are supplied.
+  pipeline. The fixed six-case official SAM2 evidence is recorded separately from the classical
+  ground-truth evidence.
 - Reference masks are not segmentation inputs. The classical prediction is completed before a
   reference is loaded or evaluated.
 - No claim of experimental accuracy, robustness, or RGB-versus-thermal superiority will be made
