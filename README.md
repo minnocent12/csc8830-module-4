@@ -103,6 +103,12 @@ reproducibility, and the repository link. The assignment-required PDF export is 
 secondary format when generated from the reviewed Word document. Real SAM2 inference, video
 recording, and final submission packaging remain pending; no SAM2 results are included.
 
+## Final submission artifacts
+
+- Editable/master report: [deliverables/Module_4_Final_Report.docx](deliverables/Module_4_Final_Report.docx)
+- Required PDF documentation: [deliverables/Module_4_Final_Report.pdf](deliverables/Module_4_Final_Report.pdf)
+- Final readiness audit: [docs/SUBMISSION_READINESS.md](docs/SUBMISSION_READINESS.md)
+
 ## Architecture
 
     app.py
