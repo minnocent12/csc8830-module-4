@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import os
+from pathlib import Path
 
 import cv2
 import numpy as np
@@ -17,7 +18,12 @@ from module4.fourier import (
     local_frequency_energy,
     magnitude_spectrum,
 )
-from module4.io_utils import decode_image_bgr, decode_image_unchanged
+from module4.io_utils import (
+    decode_image_bgr,
+    decode_image_unchanged,
+    load_image_bgr,
+    load_image_unchanged,
+)
 from module4.metrics import evaluate_masks
 from module4.reference import (
     bgr_to_sam2_rgb,
@@ -40,10 +46,26 @@ from module4.validation import (
     prepare_reference,
 )
 from module4.webapp._page import PageSpec
-from module4.webapp.ui import IMAGE_TYPES, page_header, pending_experiment_banner, status_message
+from module4.webapp.ui import (
+    IMAGE_TYPES,
+    bundled_sample_notice,
+    page_header,
+    pending_experiment_banner,
+    status_message,
+)
 from module4.visualization import bgr_to_rgb, display_mask, mask_overlap_bgr, to_display_uint8
 
 _MODULE = "Module 4"
+_REPO_ROOT = Path(__file__).resolve().parents[3]
+
+# Real Phase 8 case: aau-vap-scene1-frame-00085 (AAU VAP Trimodal People Segmentation
+# Dataset, CC BY 4.0). ROI and pipeline parameters copied from
+# data/experiment_manifest.json, where they were predefined before any reference comparison.
+_SAMPLE_RGB_IMAGE = _REPO_ROOT / "data" / "rgb" / "aau_vap_scene1_00085.jpg"
+_SAMPLE_THERMAL_IMAGE = _REPO_ROOT / "data" / "thermal" / "aau_vap_scene1_00085.jpg"
+_SAMPLE_ROI = ROI(120, 20, 450, 460)
+_SAMPLE_RGB_PARAMS = {"grabcut_iterations": 5, "opening_kernel_size": 3, "closing_kernel_size": 5}
+_SAMPLE_THERMAL_PARAMS = {"gaussian_blur_kernel_size": 1, "opening_kernel_size": 3, "closing_kernel_size": 5}
 
 
 def _rgb_page() -> None:
@@ -57,17 +79,30 @@ def _rgb_page() -> None:
         input_hint="RGB color image (OpenCV BGR uint8).",
     )
     upload = st.file_uploader("RGB image", type=IMAGE_TYPES)
-    if upload is None:
+
+    using_sample = False
+    if upload is not None:
+        try:
+            image_bgr = decode_image_bgr(upload.getvalue(), source_name=upload.name)
+        except (TypeError, ValueError) as exc:
+            st.error(f"Could not read the RGB image: {exc}")
+            return
+        source_name = upload.name
+    elif _SAMPLE_RGB_IMAGE.is_file():
+        using_sample = True
+        image_bgr = load_image_bgr(_SAMPLE_RGB_IMAGE)
+        source_name = _SAMPLE_RGB_IMAGE.name
+        bundled_sample_notice(
+            "No upload — showing a live demo on a bundled real frame from the AAU VAP "
+            "Trimodal People Segmentation Dataset (CC BY 4.0), with the ROI pre-filled at "
+            "the real Phase 8 predefined location. Upload your own RGB image to override."
+        )
+    else:
         pending_experiment_banner("Upload an RGB image to run the Phase 2 pipeline.")
-        return
-    try:
-        image_bgr = decode_image_bgr(upload.getvalue(), source_name=upload.name)
-    except (TypeError, ValueError) as exc:
-        st.error(f"Could not read the RGB image: {exc}")
         return
 
     height, width = image_bgr.shape[:2]
-    st.caption(f"Input: {upload.name} | {width} x {height} pixels | OpenCV BGR uint8")
+    st.caption(f"Input: {source_name} | {width} x {height} pixels | OpenCV BGR uint8")
     st.image(bgr_to_rgb(image_bgr), caption="Original RGB image", width="stretch")
     if width < 2 or height < 2:
         st.error("The image must be at least 2 x 2 pixels for ROI-assisted GrabCut.")
@@ -76,15 +111,19 @@ def _rgb_page() -> None:
     st.subheader("User-supplied ROI")
     st.caption("Classical RGB processing is not automatic: the rectangle must be supplied around the person.")
     st.caption("The ROI is strict xywh: x and y are the upper-left pixel; width and height are pixels.")
+    default_x = _SAMPLE_ROI.x if using_sample else width // 4
+    default_y = _SAMPLE_ROI.y if using_sample else height // 8
+    default_w = _SAMPLE_ROI.width if using_sample else min(max(2, width // 2), width)
+    default_h = _SAMPLE_ROI.height if using_sample else min(max(2, (height * 3) // 4), height)
     c1, c2, c3, c4 = st.columns(4)
-    x = int(c1.number_input("x", min_value=0, max_value=width - 2, value=width // 4, step=1))
-    y = int(c2.number_input("y", min_value=0, max_value=height - 2, value=height // 8, step=1))
+    x = int(c1.number_input("x", min_value=0, max_value=width - 2, value=min(default_x, width - 2), step=1))
+    y = int(c2.number_input("y", min_value=0, max_value=height - 2, value=min(default_y, height - 2), step=1))
     roi_width = int(
         c3.number_input(
             "width",
             min_value=2,
             max_value=width - x,
-            value=min(max(2, width // 2), width - x),
+            value=min(max(2, default_w), width - x),
             step=1,
         )
     )
@@ -93,18 +132,36 @@ def _rgb_page() -> None:
             "height",
             min_value=2,
             max_value=height - y,
-            value=min(max(2, (height * 3) // 4), height - y),
+            value=min(max(2, default_h), height - y),
             step=1,
         )
     )
     iterations = int(
-        st.slider("GrabCut iterations", min_value=1, max_value=15, value=5, help="More iterations can refine the classical optimization.")
+        st.slider(
+            "GrabCut iterations",
+            min_value=1,
+            max_value=15,
+            value=_SAMPLE_RGB_PARAMS["grabcut_iterations"] if using_sample else 5,
+            help="More iterations can refine the classical optimization.",
+        )
     )
-    opening_size = int(st.select_slider("Opening kernel", options=[1, 3, 5, 7], value=3))
-    closing_size = int(st.select_slider("Closing kernel", options=[1, 3, 5, 7], value=5))
+    opening_size = int(
+        st.select_slider(
+            "Opening kernel",
+            options=[1, 3, 5, 7],
+            value=_SAMPLE_RGB_PARAMS["opening_kernel_size"] if using_sample else 3,
+        )
+    )
+    closing_size = int(
+        st.select_slider(
+            "Closing kernel",
+            options=[1, 3, 5, 7],
+            value=_SAMPLE_RGB_PARAMS["closing_kernel_size"] if using_sample else 5,
+        )
+    )
     st.caption(f"Selected ROI: x={x}, y={y}, width={roi_width}, height={roi_height}")
 
-    if not st.button("Run classical RGB segmentation", type="primary"):
+    if not using_sample and not st.button("Run classical RGB segmentation", type="primary"):
         pending_experiment_banner("Set the ROI and run the classical pipeline to view intermediate results.")
         return
 
@@ -173,18 +230,32 @@ def _thermal_page() -> None:
         ),
     )
     upload = st.file_uploader("Thermal or thermal-intensity image", type=IMAGE_TYPES)
-    if upload is None:
+
+    using_sample = False
+    if upload is not None:
+        try:
+            image = decode_image_unchanged(upload.getvalue(), source_name=upload.name)
+        except (TypeError, ValueError) as exc:
+            st.error(f"Could not read the thermal image: {exc}")
+            return
+        source_name = upload.name
+    elif _SAMPLE_THERMAL_IMAGE.is_file():
+        using_sample = True
+        image = load_image_unchanged(_SAMPLE_THERMAL_IMAGE)
+        source_name = _SAMPLE_THERMAL_IMAGE.name
+        bundled_sample_notice(
+            "No upload — showing a live demo on a bundled real thermal frame from the AAU "
+            "VAP Trimodal People Segmentation Dataset (CC BY 4.0), with the ROI pre-filled "
+            "at the real Phase 8 predefined location. Upload your own thermal image to "
+            "override."
+        )
+    else:
         pending_experiment_banner("Upload a thermal image to run the Phase 3 pipeline.")
-        return
-    try:
-        image = decode_image_unchanged(upload.getvalue(), source_name=upload.name)
-    except (TypeError, ValueError) as exc:
-        st.error(f"Could not read the thermal image: {exc}")
         return
 
     height, width = image.shape[:2]
     st.caption(
-        f"Input: {upload.name} | {width} x {height} pixels | source dtype: {image.dtype} | "
+        f"Input: {source_name} | {width} x {height} pixels | source dtype: {image.dtype} | "
         "three-channel inputs are treated as false-color BGR palettes"
     )
     try:
@@ -205,22 +276,26 @@ def _thermal_page() -> None:
         width="stretch",
     )
 
-    use_roi = st.checkbox("Use an optional ROI to strengthen component selection", value=False)
+    use_roi = st.checkbox("Use an optional ROI to strengthen component selection", value=using_sample)
     roi = None
     if use_roi:
         if width < 2 or height < 2:
             st.error("An ROI requires an image at least 2 x 2 pixels; disable ROI to continue.")
             return
         st.caption("The ROI is strict xywh: x and y are the upper-left pixel; width and height are pixels.")
+        default_x = _SAMPLE_ROI.x if using_sample else width // 4
+        default_y = _SAMPLE_ROI.y if using_sample else height // 4
+        default_w = _SAMPLE_ROI.width if using_sample else min(max(2, width // 2), width)
+        default_h = _SAMPLE_ROI.height if using_sample else min(max(2, height // 2), height)
         c1, c2, c3, c4 = st.columns(4)
-        x = int(c1.number_input("x", min_value=0, max_value=width - 2, value=width // 4, step=1))
-        y = int(c2.number_input("y", min_value=0, max_value=height - 2, value=height // 4, step=1))
+        x = int(c1.number_input("x", min_value=0, max_value=width - 2, value=min(default_x, width - 2), step=1))
+        y = int(c2.number_input("y", min_value=0, max_value=height - 2, value=min(default_y, height - 2), step=1))
         roi_width = int(
             c3.number_input(
                 "width",
                 min_value=2,
                 max_value=width - x,
-                value=min(max(2, width // 2), width - x),
+                value=min(max(2, default_w), width - x),
                 step=1,
             )
         )
@@ -229,17 +304,35 @@ def _thermal_page() -> None:
                 "height",
                 min_value=2,
                 max_value=height - y,
-                value=min(max(2, height // 2), height - y),
+                value=min(max(2, default_h), height - y),
                 step=1,
             )
         )
         roi = ROI(x, y, roi_width, roi_height)
         st.caption(f"Selected ROI: x={x}, y={y}, width={roi_width}, height={roi_height}")
 
-    gaussian_size = int(st.select_slider("Gaussian denoising kernel", options=[1, 3, 5], value=1))
-    opening_size = int(st.select_slider("Opening kernel", options=[1, 3, 5, 7], value=3))
-    closing_size = int(st.select_slider("Closing kernel", options=[1, 3, 5, 7], value=5))
-    if not st.button("Run classical thermal segmentation", type="primary"):
+    gaussian_size = int(
+        st.select_slider(
+            "Gaussian denoising kernel",
+            options=[1, 3, 5],
+            value=_SAMPLE_THERMAL_PARAMS["gaussian_blur_kernel_size"] if using_sample else 1,
+        )
+    )
+    opening_size = int(
+        st.select_slider(
+            "Opening kernel",
+            options=[1, 3, 5, 7],
+            value=_SAMPLE_THERMAL_PARAMS["opening_kernel_size"] if using_sample else 3,
+        )
+    )
+    closing_size = int(
+        st.select_slider(
+            "Closing kernel",
+            options=[1, 3, 5, 7],
+            value=_SAMPLE_THERMAL_PARAMS["closing_kernel_size"] if using_sample else 5,
+        )
+    )
+    if not using_sample and not st.button("Run classical thermal segmentation", type="primary"):
         pending_experiment_banner("Configure optional preprocessing/ROI settings and run the thermal pipeline.")
         return
 
