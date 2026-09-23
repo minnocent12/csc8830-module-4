@@ -1,5 +1,7 @@
 # CSc 8830 Module 4 - Human Boundary Detection and Fourier Theory
 
+**Public web app (all modules):** <https://csc8830-dashboard-minnocent1.streamlit.app>
+
 This is the independent Module 4 repository for Georgia State University CSc 8830 Computer
 Vision. The assignment will provide classical OpenCV human-boundary pipelines for RGB and
 thermal images, a strictly separated SAM2 reference comparison, and a Fourier-domain theory
