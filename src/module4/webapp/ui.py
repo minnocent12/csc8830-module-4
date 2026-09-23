@@ -41,6 +41,11 @@ def pending_experiment_banner(detail: str | None = None) -> None:
     st.warning(message if detail is None else f"{message}\n\n{detail}")
 
 
+def bundled_sample_notice(detail: str) -> None:
+    """Show the standard 'showing a bundled real sample; upload your own to override' notice."""
+    st.info(detail)
+
+
 def foundation_page(title: str, scope: str) -> None:
     """Render a pending-safe placeholder for any future page."""
     st.header(title)
