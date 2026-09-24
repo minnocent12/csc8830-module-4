@@ -63,6 +63,10 @@ _REPO_ROOT = Path(__file__).resolve().parents[3]
 # data/experiment_manifest.json, where they were predefined before any reference comparison.
 _SAMPLE_RGB_IMAGE = _REPO_ROOT / "data" / "rgb" / "aau_vap_scene1_00085.jpg"
 _SAMPLE_THERMAL_IMAGE = _REPO_ROOT / "data" / "thermal" / "aau_vap_scene1_00085.jpg"
+_SAMPLE_REFERENCE_RGB_MASK = _REPO_ROOT / "data" / "reference" / "aau_vap_scene1_00085_rgb_mask_binary.png"
+_SAMPLE_REFERENCE_THERMAL_MASK = (
+    _REPO_ROOT / "data" / "reference" / "aau_vap_scene1_00085_thermal_mask_binary.png"
+)
 _SAMPLE_ROI = ROI(120, 20, 450, 460)
 _SAMPLE_RGB_PARAMS = {"grabcut_iterations": 5, "opening_kernel_size": 3, "closing_kernel_size": 5}
 _SAMPLE_THERMAL_PARAMS = {"gaussian_blur_kernel_size": 1, "opening_kernel_size": 3, "closing_kernel_size": 5}
@@ -553,22 +557,43 @@ def _comparison_page() -> None:
     modality_label = st.radio("Modality", ["RGB", "Thermal"], horizontal=True)
     modality = modality_label.lower()
     upload = st.file_uploader("Input image", type=IMAGE_TYPES, key="comparison_input")
-    if upload is None:
-        pending_experiment_banner("Upload an RGB or thermal image to run a comparison.")
-        return
 
-    try:
-        if modality == "rgb":
-            source = decode_image_bgr(upload.getvalue(), source_name=upload.name)
+    using_sample = False
+    sample_reference_path = (
+        _SAMPLE_REFERENCE_RGB_MASK if modality == "rgb" else _SAMPLE_REFERENCE_THERMAL_MASK
+    )
+    if upload is not None:
+        try:
+            if modality == "rgb":
+                source = decode_image_bgr(upload.getvalue(), source_name=upload.name)
+            else:
+                source = decode_image_unchanged(upload.getvalue(), source_name=upload.name)
+        except (TypeError, ValueError) as exc:
+            st.error(f"Could not read the input image: {exc}")
+            return
+        source_name = upload.name
+    else:
+        sample_image_path = _SAMPLE_RGB_IMAGE if modality == "rgb" else _SAMPLE_THERMAL_IMAGE
+        if sample_image_path.is_file():
+            using_sample = True
+            source = (
+                load_image_bgr(sample_image_path)
+                if modality == "rgb"
+                else load_image_unchanged(sample_image_path)
+            )
+            source_name = sample_image_path.name
+            bundled_sample_notice(
+                "No upload — showing a live demo on a bundled real frame and its real "
+                "ground-truth reference mask from the AAU VAP Trimodal People Segmentation "
+                "Dataset (CC BY 4.0). Upload your own image to override."
+            )
         else:
-            source = decode_image_unchanged(upload.getvalue(), source_name=upload.name)
-    except (TypeError, ValueError) as exc:
-        st.error(f"Could not read the input image: {exc}")
-        return
+            pending_experiment_banner("Upload an RGB or thermal image to run a comparison.")
+            return
 
     height, width = source.shape[:2]
     st.caption(
-        f"Input: {upload.name} | {width} x {height} pixels | "
+        f"Input: {source_name} | {width} x {height} pixels | "
         f"computational source dtype: {source.dtype}"
     )
     if modality == "rgb":
@@ -577,15 +602,19 @@ def _comparison_page() -> None:
             st.error("The RGB image must be at least 2 x 2 pixels for ROI-assisted GrabCut.")
             return
         st.subheader("1. Classical input and parameters")
+        default_x = _SAMPLE_ROI.x if using_sample else width // 4
+        default_y = _SAMPLE_ROI.y if using_sample else height // 8
+        default_w = _SAMPLE_ROI.width if using_sample else min(max(2, width // 2), width)
+        default_h = _SAMPLE_ROI.height if using_sample else min(max(2, (height * 3) // 4), height)
         c1, c2, c3, c4 = st.columns(4)
-        x = int(c1.number_input("ROI x", min_value=0, max_value=width - 2, value=width // 4, step=1))
-        y = int(c2.number_input("ROI y", min_value=0, max_value=height - 2, value=height // 8, step=1))
+        x = int(c1.number_input("ROI x", min_value=0, max_value=width - 2, value=min(default_x, width - 2), step=1))
+        y = int(c2.number_input("ROI y", min_value=0, max_value=height - 2, value=min(default_y, height - 2), step=1))
         roi_width = int(
             c3.number_input(
                 "ROI width",
                 min_value=2,
                 max_value=width - x,
-                value=min(max(2, width // 2), width - x),
+                value=min(max(2, default_w), width - x),
                 step=1,
             )
         )
@@ -594,13 +623,31 @@ def _comparison_page() -> None:
                 "ROI height",
                 min_value=2,
                 max_value=height - y,
-                value=min(max(2, (height * 3) // 4), height - y),
+                value=min(max(2, default_h), height - y),
                 step=1,
             )
         )
-        iterations = int(st.slider("GrabCut iterations", 1, 15, 5, key="comparison_rgb_iterations"))
-        opening_size = int(st.select_slider("Opening kernel", [1, 3, 5, 7], value=3, key="comparison_rgb_opening"))
-        closing_size = int(st.select_slider("Closing kernel", [1, 3, 5, 7], value=5, key="comparison_rgb_closing"))
+        iterations = int(
+            st.slider(
+                "GrabCut iterations", 1, 15,
+                _SAMPLE_RGB_PARAMS["grabcut_iterations"] if using_sample else 5,
+                key="comparison_rgb_iterations",
+            )
+        )
+        opening_size = int(
+            st.select_slider(
+                "Opening kernel", [1, 3, 5, 7],
+                value=_SAMPLE_RGB_PARAMS["opening_kernel_size"] if using_sample else 3,
+                key="comparison_rgb_opening",
+            )
+        )
+        closing_size = int(
+            st.select_slider(
+                "Closing kernel", [1, 3, 5, 7],
+                value=_SAMPLE_RGB_PARAMS["closing_kernel_size"] if using_sample else 5,
+                key="comparison_rgb_closing",
+            )
+        )
         roi = ROI(x, y, roi_width, roi_height)
         config: RGBPipelineConfig | ThermalPipelineConfig = RGBPipelineConfig(
             grabcut_iterations=iterations,
@@ -621,21 +668,25 @@ def _comparison_page() -> None:
             width="stretch",
         )
         st.subheader("1. Classical input and parameters")
-        use_roi = st.checkbox("Use an optional ROI", value=False, key="comparison_thermal_use_roi")
+        use_roi = st.checkbox("Use an optional ROI", value=using_sample, key="comparison_thermal_use_roi")
         roi = None
         if use_roi:
             if width < 2 or height < 2:
                 st.error("An ROI requires an image at least 2 x 2 pixels.")
                 return
+            default_x = _SAMPLE_ROI.x if using_sample else width // 4
+            default_y = _SAMPLE_ROI.y if using_sample else height // 4
+            default_w = _SAMPLE_ROI.width if using_sample else min(max(2, width // 2), width)
+            default_h = _SAMPLE_ROI.height if using_sample else min(max(2, height // 2), height)
             c1, c2, c3, c4 = st.columns(4)
-            x = int(c1.number_input("ROI x", min_value=0, max_value=width - 2, value=width // 4, step=1))
-            y = int(c2.number_input("ROI y", min_value=0, max_value=height - 2, value=height // 4, step=1))
+            x = int(c1.number_input("ROI x", min_value=0, max_value=width - 2, value=min(default_x, width - 2), step=1))
+            y = int(c2.number_input("ROI y", min_value=0, max_value=height - 2, value=min(default_y, height - 2), step=1))
             roi_width = int(
                 c3.number_input(
                     "ROI width",
                     min_value=2,
                     max_value=width - x,
-                    value=min(max(2, width // 2), width - x),
+                    value=min(max(2, default_w), width - x),
                     step=1,
                 )
             )
@@ -644,14 +695,32 @@ def _comparison_page() -> None:
                     "ROI height",
                     min_value=2,
                     max_value=height - y,
-                    value=min(max(2, height // 2), height - y),
+                    value=min(max(2, default_h), height - y),
                     step=1,
                 )
             )
             roi = ROI(x, y, roi_width, roi_height)
-        gaussian_size = int(st.select_slider("Gaussian kernel", [1, 3, 5], value=1, key="comparison_thermal_gaussian"))
-        opening_size = int(st.select_slider("Opening kernel", [1, 3, 5, 7], value=3, key="comparison_thermal_opening"))
-        closing_size = int(st.select_slider("Closing kernel", [1, 3, 5, 7], value=5, key="comparison_thermal_closing"))
+        gaussian_size = int(
+            st.select_slider(
+                "Gaussian kernel", [1, 3, 5],
+                value=_SAMPLE_THERMAL_PARAMS["gaussian_blur_kernel_size"] if using_sample else 1,
+                key="comparison_thermal_gaussian",
+            )
+        )
+        opening_size = int(
+            st.select_slider(
+                "Opening kernel", [1, 3, 5, 7],
+                value=_SAMPLE_THERMAL_PARAMS["opening_kernel_size"] if using_sample else 3,
+                key="comparison_thermal_opening",
+            )
+        )
+        closing_size = int(
+            st.select_slider(
+                "Closing kernel", [1, 3, 5, 7],
+                value=_SAMPLE_THERMAL_PARAMS["closing_kernel_size"] if using_sample else 5,
+                key="comparison_thermal_closing",
+            )
+        )
         config = ThermalPipelineConfig(
             gaussian_blur_kernel_size=gaussian_size,
             opening_kernel_size=opening_size,
@@ -659,15 +728,17 @@ def _comparison_page() -> None:
         )
 
     st.subheader("2. Reference selection")
+    reference_source_options = ["None", "Uploaded reference mask", "SAM2 reference"]
     reference_source = st.radio(
         "Reference source",
-        ["None", "Uploaded reference mask", "SAM2 reference"],
+        reference_source_options,
+        index=reference_source_options.index("Uploaded reference mask") if using_sample else 0,
         horizontal=True,
         key="comparison_reference_source",
     )
     reference_upload = None
     reference_type = None
-    reference_image_id = upload.name
+    reference_image_id = source_name
     explicit_alignment = False
     sam2_prompt = None
     sam2_config = None
@@ -686,7 +757,7 @@ def _comparison_page() -> None:
         )
         reference_image_id = st.text_input(
             "Reference image ID",
-            value=upload.name,
+            value=source_name,
             key="comparison_reference_image_id",
             help="Must match the input image ID exactly; this prevents cross-image comparisons.",
         )
@@ -696,6 +767,11 @@ def _comparison_page() -> None:
             key="comparison_reference_alignment",
             help="No resizing occurs unless this control is selected.",
         )
+        if using_sample and reference_upload is None:
+            bundled_sample_notice(
+                "No reference mask uploaded — using the bundled real ground-truth mask for "
+                "this frame. Upload your own to override."
+            )
     elif reference_source == "SAM2 reference":
         status_message(
             "SAM2 integration",
@@ -715,7 +791,7 @@ def _comparison_page() -> None:
         sam2_prompt = _sam2_prompt_controls(width, height, roi)
         sam2_config = _sam2_configuration()
 
-    if not st.button("Run classical pipeline and evaluate reference", type="primary"):
+    if not using_sample and not st.button("Run classical pipeline and evaluate reference", type="primary"):
         pending_experiment_banner("Run the classical pipeline to produce a prediction and evaluate the selected reference if available.")
         return
 
@@ -758,7 +834,7 @@ def _comparison_page() -> None:
                 sam2_input,
                 sam2_prompt,
                 config=sam2_config,
-                source_image_id=upload.name,
+                source_image_id=source_name,
             )
         except (TypeError, ValueError) as exc:
             status_message(
@@ -799,8 +875,8 @@ def _comparison_page() -> None:
                 expected_shape=result.final_mask.shape,
                 reference_status="available",
                 reference_type="sam2_reference",
-                image_id=upload.name,
-                reference_image_id=upload.name,
+                image_id=source_name,
+                reference_image_id=source_name,
             )
             if prepared.mask is None:
                 raise ReferenceValidationError("SAM2 reference validation returned no mask")
@@ -815,7 +891,7 @@ def _comparison_page() -> None:
         st.caption("Metrics compare the classical mask with the SAM2 reference segmentation; no ground-truth claim is made.")
         return
 
-    if reference_upload is None:
+    if reference_upload is None and not (using_sample and sample_reference_path.is_file()):
         status_message(
             "Reference status",
             "Pending",
@@ -823,12 +899,15 @@ def _comparison_page() -> None:
         )
         return
     try:
-        reference = decode_image_unchanged(reference_upload.getvalue(), source_name=reference_upload.name)
+        if reference_upload is not None:
+            reference = decode_image_unchanged(reference_upload.getvalue(), source_name=reference_upload.name)
+        else:
+            reference = load_image_unchanged(sample_reference_path)
         if explicit_alignment:
             reference_mask, alignment = align_reference_mask(
                 reference,
                 result.final_mask.shape,
-                prediction_image_id=upload.name,
+                prediction_image_id=source_name,
                 reference_image_id=reference_image_id,
                 reference_type=reference_type,
             )
@@ -838,7 +917,7 @@ def _comparison_page() -> None:
                 expected_shape=result.final_mask.shape,
                 reference_status="available",
                 reference_type=reference_type,
-                image_id=upload.name,
+                image_id=source_name,
                 reference_image_id=reference_image_id,
             )
             if prepared.mask is None:
