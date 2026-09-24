@@ -46,10 +46,12 @@ data/reference/**
 !data/reference/.gitkeep
 
 # Bundled real-sample fallback input (AAU VAP Trimodal People Segmentation Dataset, CC BY
-# 4.0) for the webapp's RGB/Thermal pages when nothing is uploaded. Small, public, licensed
-# frames only, matching data/experiment_manifest.json's Phase 8 case.
+# 4.0) for the webapp's RGB/Thermal/Comparison pages when nothing is uploaded. Small,
+# public, licensed frames only, matching data/experiment_manifest.json's Phase 8 case.
 !data/rgb/aau_vap_scene1_00085.jpg
 !data/thermal/aau_vap_scene1_00085.jpg
+!data/reference/aau_vap_scene1_00085_rgb_mask_binary.png
+!data/reference/aau_vap_scene1_00085_thermal_mask_binary.png
 *.pt
 *.pth
 *.onnx
