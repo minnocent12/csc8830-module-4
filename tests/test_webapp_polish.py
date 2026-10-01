@@ -12,18 +12,26 @@ def _encoded_png(image: np.ndarray) -> tuple[str, bytes, str]:
     return ("input.png", encoded.tobytes(), "image/png")
 
 
-def test_rgb_page_explains_question_mapping_and_pending_input_state() -> None:
-    app = AppTest.from_file("app.py").run()
+def test_rgb_page_explains_question_mapping_and_runs_bundled_sample() -> None:
+    app = AppTest.from_file("../app.py").run()
     app.radio[0].set_value("RGB Human Boundary").run()
 
     assert not app.exception
     assert any("Question 1" in item.value for item in app.header)
     assert any("classical OpenCV" in item.value for item in app.info)
-    assert any("Pending user data" in item.value for item in app.warning)
+    # No upload: the committed AAU VAP frame is processed live instead of a pending banner.
+    assert any("bundled real frame" in item.value for item in app.info)
+    assert not any("Pending user data" in item.value for item in app.warning)
+    assert any("aau_vap_scene1_00085.jpg" in item.value for item in app.caption)
+    # ROI is prefilled with the real predefined Phase 8 location, and the run gate is skipped.
+    roi = {item.label: item.value for item in app.number_input}
+    assert roi == {"x": 120, "y": 20, "width": 450, "height": 460}
+    assert not app.button
+    assert any("Processing sequence" in item.value for item in app.subheader)
 
 
 def test_thermal_page_explains_dual_polarity_classical_processing() -> None:
-    app = AppTest.from_file("app.py").run()
+    app = AppTest.from_file("../app.py").run()
     app.radio[0].set_value("Thermal Human Boundary").run()
 
     assert not app.exception
@@ -31,18 +39,28 @@ def test_thermal_page_explains_dual_polarity_classical_processing() -> None:
     assert any("bright and dark" in item.value for item in app.info)
 
 
-def test_comparison_page_labels_pending_reference_without_zero_metrics() -> None:
-    app = AppTest.from_file("app.py").run()
+def test_comparison_page_evaluates_bundled_ground_truth_with_real_metrics() -> None:
+    app = AppTest.from_file("../app.py").run()
     app.radio[0].set_value("Comparison and Evaluation").run()
 
     assert not app.exception
     assert any("Supporting evaluation" in item.value for item in app.header)
-    assert any("Pending user data" in item.value for item in app.warning)
-    assert not app.metric
+    # No upload: the committed frame and its real ground-truth mask are used as the reference.
+    assert any("bundled real frame" in item.value for item in app.info)
+    assert any("bundled real ground-truth mask" in item.value for item in app.info)
+    assert not any("Pending user data" in item.value for item in app.warning)
+    assert app.radio(key="comparison_reference_source").value == "Uploaded reference mask"
+    assert not app.button
+    # Metrics come from a real comparison, so each one is present and a genuine ratio, never
+    # a placeholder zero.
+    metrics = {item.label: float(item.value) for item in app.metric}
+    assert {"IoU", "Dice", "Precision", "Recall"} <= set(metrics)
+    for label in ("IoU", "Dice", "Precision", "Recall"):
+        assert 0.0 < metrics[label] <= 1.0
 
 
 def test_fourier_page_separates_theory_and_educational_demonstration() -> None:
-    app = AppTest.from_file("app.py").run()
+    app = AppTest.from_file("../app.py").run()
     app.radio[0].set_value("Fourier Theory").run()
 
     assert not app.exception
@@ -57,7 +75,7 @@ def test_fourier_page_separates_theory_and_educational_demonstration() -> None:
 def test_rgb_and_thermal_pages_run_their_major_ui_sections() -> None:
     rgb = np.zeros((48, 48, 3), dtype=np.uint8)
     rgb[12:36, 16:32] = (40, 120, 220)
-    app = AppTest.from_file("app.py").run()
+    app = AppTest.from_file("../app.py").run()
     app.radio[0].set_value("RGB Human Boundary").run()
     app.file_uploader[0].set_value(_encoded_png(rgb)).run()
     app.button[0].click().run()
@@ -66,7 +84,7 @@ def test_rgb_and_thermal_pages_run_their_major_ui_sections() -> None:
 
     thermal = np.zeros((48, 48), dtype=np.uint8)
     thermal[12:36, 16:32] = 220
-    app = AppTest.from_file("app.py").run()
+    app = AppTest.from_file("../app.py").run()
     app.radio[0].set_value("Thermal Human Boundary").run()
     app.file_uploader[0].set_value(_encoded_png(thermal)).run()
     app.button[0].click().run()

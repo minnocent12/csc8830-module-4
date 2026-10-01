@@ -12,7 +12,7 @@ def test_comparison_page_reports_sam2_unavailable_without_metrics() -> None:
     encoded_ok, encoded = cv2.imencode(".png", image)
     assert encoded_ok
 
-    app = AppTest.from_file("app.py").run()
+    app = AppTest.from_file("../app.py").run()
     app.radio[0].set_value("Comparison and Evaluation").run()
     app.file_uploader[0].set_value(("input.png", encoded.tobytes(), "image/png")).run()
     app.radio[1].set_value("SAM2 reference").run()

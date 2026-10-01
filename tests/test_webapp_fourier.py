@@ -7,7 +7,7 @@ from streamlit.testing.v1 import AppTest
 
 
 def test_fourier_page_renders_parts_a_to_f_with_synthetic_demo() -> None:
-    app = AppTest.from_file("app.py").run()
+    app = AppTest.from_file("../app.py").run()
     app.radio[0].set_value("Fourier Theory").run()
 
     assert not app.exception
@@ -22,7 +22,7 @@ def test_fourier_page_accepts_uploaded_rgb_input() -> None:
     encoded_ok, encoded = cv2.imencode(".png", image)
     assert encoded_ok
 
-    app = AppTest.from_file("app.py").run()
+    app = AppTest.from_file("../app.py").run()
     app.radio[0].set_value("Fourier Theory").run()
     app.file_uploader[0].set_value(("fourier.png", encoded.tobytes(), "image/png")).run()
 
