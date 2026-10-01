@@ -13,11 +13,12 @@ dependencies = [
     "numpy>=1.24",
     "matplotlib>=3.7",
     "Pillow>=10.0",
-    "streamlit>=1.30",
+    "streamlit>=1.49,<2",
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=8.0"]
+# The web app tests drive uploads through AppTest.file_uploader, first shipped in Streamlit 1.56.
+dev = ["pytest>=8.0", "streamlit>=1.56,<2"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
