@@ -1,9 +1,15 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 import cv2
 import numpy as np
 
 from streamlit.testing.v1 import AppTest
+
+# Absolute, so the path means the same thing on every supported Streamlit version: 1.47
+# resolves a relative path against the working directory first, 1.64 against this file.
+APP_PATH = str(Path(__file__).resolve().parents[1] / "app.py")
 
 
 def _encoded_png(image: np.ndarray) -> tuple[str, bytes, str]:
@@ -13,7 +19,7 @@ def _encoded_png(image: np.ndarray) -> tuple[str, bytes, str]:
 
 
 def test_rgb_page_explains_question_mapping_and_runs_bundled_sample() -> None:
-    app = AppTest.from_file("../app.py").run()
+    app = AppTest.from_file(APP_PATH).run()
     app.radio[0].set_value("RGB Human Boundary").run()
 
     assert not app.exception
@@ -31,7 +37,7 @@ def test_rgb_page_explains_question_mapping_and_runs_bundled_sample() -> None:
 
 
 def test_thermal_page_explains_dual_polarity_classical_processing() -> None:
-    app = AppTest.from_file("../app.py").run()
+    app = AppTest.from_file(APP_PATH).run()
     app.radio[0].set_value("Thermal Human Boundary").run()
 
     assert not app.exception
@@ -40,7 +46,7 @@ def test_thermal_page_explains_dual_polarity_classical_processing() -> None:
 
 
 def test_comparison_page_evaluates_bundled_ground_truth_with_real_metrics() -> None:
-    app = AppTest.from_file("../app.py").run()
+    app = AppTest.from_file(APP_PATH).run()
     app.radio[0].set_value("Comparison and Evaluation").run()
 
     assert not app.exception
@@ -60,7 +66,7 @@ def test_comparison_page_evaluates_bundled_ground_truth_with_real_metrics() -> N
 
 
 def test_fourier_page_separates_theory_and_educational_demonstration() -> None:
-    app = AppTest.from_file("../app.py").run()
+    app = AppTest.from_file(APP_PATH).run()
     app.radio[0].set_value("Fourier Theory").run()
 
     assert not app.exception
@@ -75,7 +81,7 @@ def test_fourier_page_separates_theory_and_educational_demonstration() -> None:
 def test_rgb_and_thermal_pages_run_their_major_ui_sections() -> None:
     rgb = np.zeros((48, 48, 3), dtype=np.uint8)
     rgb[12:36, 16:32] = (40, 120, 220)
-    app = AppTest.from_file("../app.py").run()
+    app = AppTest.from_file(APP_PATH).run()
     app.radio[0].set_value("RGB Human Boundary").run()
     app.file_uploader[0].set_value(_encoded_png(rgb)).run()
     app.button[0].click().run()
@@ -84,7 +90,7 @@ def test_rgb_and_thermal_pages_run_their_major_ui_sections() -> None:
 
     thermal = np.zeros((48, 48), dtype=np.uint8)
     thermal[12:36, 16:32] = 220
-    app = AppTest.from_file("../app.py").run()
+    app = AppTest.from_file(APP_PATH).run()
     app.radio[0].set_value("Thermal Human Boundary").run()
     app.file_uploader[0].set_value(_encoded_png(thermal)).run()
     app.button[0].click().run()
