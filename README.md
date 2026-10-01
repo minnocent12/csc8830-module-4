@@ -68,7 +68,8 @@ The standalone app does not require SAM2.
 Do not edit them by hand; they are refreshed from that repository with its
 `scripts/vendor.py`. The app needs nothing from csc8830-ui at runtime, and
 `tests/test_design_theme.py` checks that the config still matches the vendored kit.
-Requires `streamlit>=1.47,<2`.
+Requires `streamlit>=1.49,<2`; the test suite (`pip install -e ".[dev]"`) needs
+`streamlit>=1.56,<2` because its upload tests use `AppTest.file_uploader`.
 
 ### Optional SAM2 reference environment
 
