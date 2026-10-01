@@ -64,12 +64,15 @@ The standalone app does not require SAM2.
 ### Visual theme
 
 `src/module4/webapp/design/` and `.streamlit/config.toml` are generated copies of the shared
-[csc8830-ui](https://github.com/minnocent12/csc8830-ui) design kit (`KIT_VERSION` 0.4.0), including its shared
+[csc8830-ui](https://github.com/minnocent12/csc8830-ui) design kit (`KIT_VERSION` 0.5.0), including its shared
 components in `webapp/design/components/` and the shared app shell that
 `webapp/shell.py` delegates to.
 Do not edit them by hand; they are refreshed from that repository with its
 `scripts/vendor.py`. The app needs nothing from csc8830-ui at runtime, and
 `tests/test_design_theme.py` checks that the config still matches the vendored kit.
+`webapp/summary.py` gives the combined dashboard's Home card a "Results available" chip
+only when every record in the committed `results/metrics/phase8_experiment_records.json`
+is marked `completed`.
 Requires `streamlit>=1.49,<2`; the test suite (`pip install -e ".[dev]"`) needs
 `streamlit>=1.56,<2` because its upload tests use `AppTest.file_uploader`.
 
