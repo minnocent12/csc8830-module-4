@@ -61,6 +61,15 @@ The canonical written theory is [docs/FOURIER_THEORY.md](docs/FOURIER_THEORY.md)
 
 The standalone app does not require SAM2.
 
+### Visual theme
+
+`src/module4/webapp/design/` and `.streamlit/config.toml` are generated copies of the shared
+[csc8830-ui](https://github.com/minnocent12/csc8830-ui) design kit (`KIT_VERSION` 0.2.0).
+Do not edit them by hand; they are refreshed from that repository with its
+`scripts/vendor.py`. The app needs nothing from csc8830-ui at runtime, and
+`tests/test_design_theme.py` checks that the config still matches the vendored kit.
+Requires `streamlit>=1.47,<2`.
+
 ### Optional SAM2 reference environment
 
 The base installation intentionally does not install PyTorch or SAM2. The optional adapter uses
