@@ -576,6 +576,36 @@ def _synthetic_fourier_example() -> np.ndarray:
     return np.repeat(row[None, :], rows, axis=0)
 
 
+# Ownership of the keyed "Reference image ID" field. While it is auto-managed it follows the
+# current comparison image's ID (the same ``source_name`` the validation compares against);
+# once the user edits it to anything else it is user-owned and never overwritten. Editing it
+# back to the current image ID returns it to auto-managed. Validation itself is unchanged.
+_REFERENCE_ID_KEY = "comparison_reference_image_id"
+_REFERENCE_ID_OWNER = "_comparison_reference_image_id_owner"  # "auto" or "user"
+_REFERENCE_ID_AUTO_VALUE = "_comparison_reference_image_id_auto"  # last automatically supplied ID
+
+
+def _sync_reference_image_id(image_id: str) -> None:
+    """Before the field renders, point an auto-managed field at the current image ID.
+
+    A stale auto-managed value is cleared rather than overwritten, so Streamlit recreates the
+    widget with its normal ``value=image_id`` default (writing a widget key that also has a
+    ``value`` argument makes Streamlit show a warning).
+    """
+    state = st.session_state
+    if state.get(_REFERENCE_ID_OWNER) != "user" and state.get(_REFERENCE_ID_KEY, image_id) != image_id:
+        del state[_REFERENCE_ID_KEY]
+    state[_REFERENCE_ID_AUTO_VALUE] = image_id
+    state.setdefault(_REFERENCE_ID_OWNER, "auto")
+
+
+def _mark_reference_image_id_edited() -> None:
+    """``on_change`` callback: a user edit takes ownership unless it restores the current ID."""
+    state = st.session_state
+    edited = state.get(_REFERENCE_ID_KEY)
+    state[_REFERENCE_ID_OWNER] = "auto" if edited == state.get(_REFERENCE_ID_AUTO_VALUE) else "user"
+
+
 _COMPARISON_INTRO = (
     "Compare a completed classical mask with an uploaded reference mask or optional SAM2 "
     "reference segmentation. Validation precedes overlap visualization and metrics."
@@ -836,11 +866,13 @@ def _comparison_page() -> None:
                     key="comparison_reference_type",
                 )
             with c2:
+                _sync_reference_image_id(source_name)
                 reference_image_id = st.text_input(
                     "Reference image ID",
                     value=source_name,
-                    key="comparison_reference_image_id",
+                    key=_REFERENCE_ID_KEY,
                     help="Must match the input image ID exactly; this prevents cross-image comparisons.",
+                    on_change=_mark_reference_image_id_edited,
                 )
             explicit_alignment = st.checkbox(
                 "Explicitly align a mismatched reference with nearest-neighbor resize",
