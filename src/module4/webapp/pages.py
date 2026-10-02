@@ -586,15 +586,22 @@ _REFERENCE_ID_AUTO_VALUE = "_comparison_reference_image_id_auto"  # last automat
 
 
 def _sync_reference_image_id(image_id: str) -> None:
-    """Before the field renders, point an auto-managed field at the current image ID.
+    """Before the field renders, give it the current image ID unless the user owns it.
 
-    A stale auto-managed value is cleared rather than overwritten, so Streamlit recreates the
-    widget with its normal ``value=image_id`` default (writing a widget key that also has a
-    ``value`` argument makes Streamlit show a warning).
+    The value is assigned through session state, which Streamlit sends to the browser, so the
+    field visibly updates. (Deleting the key is not enough: the browser keeps and resends the
+    old value.) The widget therefore has no ``value`` argument; a keyed widget given both
+    triggers Streamlit's duplicate-default warning, shown in the page on 1.49.
+
+    When the field was not rendered on the previous run (another reference source was
+    selected), Streamlit has dropped its state; it starts again auto-managed, as it did before.
     """
     state = st.session_state
-    if state.get(_REFERENCE_ID_OWNER) != "user" and state.get(_REFERENCE_ID_KEY, image_id) != image_id:
-        del state[_REFERENCE_ID_KEY]
+    if _REFERENCE_ID_KEY not in state:
+        state[_REFERENCE_ID_KEY] = image_id
+        state[_REFERENCE_ID_OWNER] = "auto"
+    elif state.get(_REFERENCE_ID_OWNER) != "user" and state[_REFERENCE_ID_KEY] != image_id:
+        state[_REFERENCE_ID_KEY] = image_id
     state[_REFERENCE_ID_AUTO_VALUE] = image_id
     state.setdefault(_REFERENCE_ID_OWNER, "auto")
 
@@ -869,7 +876,6 @@ def _comparison_page() -> None:
                 _sync_reference_image_id(source_name)
                 reference_image_id = st.text_input(
                     "Reference image ID",
-                    value=source_name,
                     key=_REFERENCE_ID_KEY,
                     help="Must match the input image ID exactly; this prevents cross-image comparisons.",
                     on_change=_mark_reference_image_id_edited,
