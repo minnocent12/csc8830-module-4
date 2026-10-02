@@ -15,7 +15,7 @@ def page_header(
     status: str = "Implemented",
 ) -> None:
     """Render the common assignment mapping, purpose, input, and implementation status."""
-    st.header(f"{assignment_label} — {title}")
+    st.header(f"{assignment_label}: {title}")
     st.info(summary)
     st.caption(f"Expected input: {input_hint}")
     st.caption(f"Implementation status: **{status}**")
