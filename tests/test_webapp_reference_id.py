@@ -187,7 +187,9 @@ def test_reference_widgets_keep_labels_types_and_defaults() -> None:
     app = _page()
     field = app.text_input(key=ID_KEY)
     assert field.label == "Reference image ID"
-    assert field.proto.default == BUNDLED_ID
+    # The initial value comes from session state (so the app can update it), not ``value=``.
+    assert field.value == BUNDLED_ID
+    assert not any("Session State API" in item.value for item in app.warning)
     assert field.proto.help == "Must match the input image ID exactly; this prevents cross-image comparisons."
     assert app.radio(key="comparison_reference_source").value == "Uploaded reference mask"
     assert app.selectbox(key="comparison_reference_type").value == "ground_truth"
