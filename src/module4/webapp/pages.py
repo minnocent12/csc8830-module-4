@@ -97,12 +97,12 @@ def _rgb_page() -> None:
         image_bgr = load_image_bgr(_SAMPLE_RGB_IMAGE)
         source_name = _SAMPLE_RGB_IMAGE.name
         bundled_sample_notice(
-            "No upload — showing a live demo on a bundled real frame from the AAU VAP "
+            "No upload: showing a live demo on a bundled real frame from the AAU VAP "
             "Trimodal People Segmentation Dataset (CC BY 4.0), with the ROI pre-filled at "
-            "the real Phase 8 predefined location. Upload your own RGB image to override."
+            "the real predefined experiment location. Upload your own RGB image to override."
         )
     else:
-        pending_experiment_banner("Upload an RGB image to run the Phase 2 pipeline.")
+        pending_experiment_banner("Upload an RGB image to run the classical RGB segmentation pipeline.")
         return
 
     height, width = image_bgr.shape[:2]
@@ -248,13 +248,13 @@ def _thermal_page() -> None:
         image = load_image_unchanged(_SAMPLE_THERMAL_IMAGE)
         source_name = _SAMPLE_THERMAL_IMAGE.name
         bundled_sample_notice(
-            "No upload — showing a live demo on a bundled real thermal frame from the AAU "
+            "No upload: showing a live demo on a bundled real thermal frame from the AAU "
             "VAP Trimodal People Segmentation Dataset (CC BY 4.0), with the ROI pre-filled "
-            "at the real Phase 8 predefined location. Upload your own thermal image to "
+            "at the real predefined experiment location. Upload your own thermal image to "
             "override."
         )
     else:
-        pending_experiment_banner("Upload a thermal image to run the Phase 3 pipeline.")
+        pending_experiment_banner("Upload a thermal image to run the classical thermal segmentation pipeline.")
         return
 
     height, width = image.shape[:2]
@@ -394,7 +394,7 @@ def _thermal_page() -> None:
         st.warning(warning)
     st.caption(
         "Use Comparison and Evaluation to upload a reference and compute validated pixel-level "
-        "metrics. The tracked Phase 8 records contain six fixed real-data classical and official "
+        "metrics. The saved experiment records contain six fixed real-data classical and official "
         "SAM2 reference comparisons; the optional SAM2 runtime still requires its isolated "
         "environment and local checkpoint. Fourier theory is available on the Fourier Theory page."
     )
@@ -583,7 +583,7 @@ def _comparison_page() -> None:
             )
             source_name = sample_image_path.name
             bundled_sample_notice(
-                "No upload — showing a live demo on a bundled real frame and its real "
+                "No upload: showing a live demo on a bundled real frame and its real "
                 "ground-truth reference mask from the AAU VAP Trimodal People Segmentation "
                 "Dataset (CC BY 4.0). Upload your own image to override."
             )
@@ -769,7 +769,7 @@ def _comparison_page() -> None:
         )
         if using_sample and reference_upload is None:
             bundled_sample_notice(
-                "No reference mask uploaded — using the bundled real ground-truth mask for "
+                "No reference mask uploaded: using the bundled real ground-truth mask for "
                 "this frame. Upload your own to override."
             )
     elif reference_source == "SAM2 reference":
@@ -945,7 +945,7 @@ def _theory_page() -> None:
         "Fourier-Domain Edge Detection and Region Segmentation",
         assignment_label="Question 3",
         summary=(
-            "Teach Fourier Parts A–F and provide deterministic educational demonstrations. "
+            "Teach Fourier Parts A-F and provide deterministic educational demonstrations. "
             "Frequency responses are not semantic human masks or empirical results."
         ),
         input_hint=(
@@ -954,8 +954,8 @@ def _theory_page() -> None:
     )
 
     st.subheader("Theory")
-    st.caption("Parts A–F: equations, frequency interpretation, filtering, derivatives, Laplacian, and local analysis.")
-    st.subheader("Part A — 2D Fourier representation")
+    st.caption("Parts A-F: equations, frequency interpretation, filtering, derivatives, Laplacian, and local analysis.")
+    st.subheader("Part A: 2D Fourier representation")
     st.markdown(
         "`f(x,y)` is the scalar spatial image; `F(u,v)` is its frequency representation. "
         "Rows are the y axis and columns are the x axis. The implementation uses NumPy's "
@@ -1012,7 +1012,7 @@ def _theory_page() -> None:
         width="stretch",
     )
 
-    st.subheader("Part B — Why edges are high frequency")
+    st.subheader("Part B: Why edges are high frequency")
     st.markdown(
         "A constant region is dominated by DC/low frequency. A smooth gradient changes slowly. "
         "A sharp step changes rapidly and requires a broad spectrum, including high frequencies. "
@@ -1021,7 +1021,7 @@ def _theory_page() -> None:
     )
     st.latex(r"G(u,v)=H(u,v)F(u,v),\qquad g(x,y)=\mathcal{F}^{-1}\{G(u,v)\}")
 
-    st.subheader("Part C — Gaussian high-pass filtering")
+    st.subheader("Part C: Gaussian high-pass filtering")
     sigma = float(
         st.slider(
             "Gaussian low-pass sigma (cycles per pixel)",
@@ -1045,7 +1045,7 @@ def _theory_page() -> None:
         st.image(_fourier_display(high_response, signed=True), caption="Gaussian high-pass response", width="stretch")
     st.caption("A Gaussian transition avoids the stronger ringing associated with an ideal hard cutoff.")
 
-    st.subheader("Part D — Fourier derivative property")
+    st.subheader("Part D: Fourier derivative property")
     st.latex(r"\mathcal{F}\{\partial f/\partial x\}=j2\pi uF(u,v)")
     st.latex(r"\mathcal{F}\{\partial f/\partial y\}=j2\pi vF(u,v)")
     st.markdown(
@@ -1062,7 +1062,7 @@ def _theory_page() -> None:
     with c2:
         st.image(_fourier_display(derivative_y, signed=True), caption="Fourier y derivative", width="stretch")
 
-    st.subheader("Part E — Frequency-domain Laplacian")
+    st.subheader("Part E: Frequency-domain Laplacian")
     st.latex(r"\nabla^2f=\partial^2f/\partial x^2+\partial^2f/\partial y^2")
     st.latex(r"\mathcal{F}\{\nabla^2f\}=-4\pi^2(u^2+v^2)F(u,v)")
     st.markdown(
@@ -1073,7 +1073,7 @@ def _theory_page() -> None:
     laplacian = frequency_laplacian(scalar_image)
     st.image(_fourier_display(laplacian, signed=True), caption="Fourier-domain Laplacian response", width="stretch")
 
-    st.subheader("Part F — Fourier-domain region segmentation")
+    st.subheader("Part F: Fourier-domain region segmentation")
     st.markdown(
         "Frequency-selective segmentation can transform an image or window, isolate a radial or "
         "directional band, measure selected-band energy, reconstruct a spatial response, and then "

@@ -14,7 +14,7 @@ _PAGE_CONTEXT = {
     "RGB Human Boundary": "Question 1 · classical OpenCV RGB segmentation",
     "Thermal Human Boundary": "Question 2 · classical OpenCV thermal segmentation",
     "Comparison and Evaluation": "Supporting comparison · classical mask versus reference mask",
-    "Fourier Theory": "Question 3 · Fourier Parts A–F and demonstrations",
+    "Fourier Theory": "Question 3 · Fourier Parts A-F and demonstrations",
 }
 
 
