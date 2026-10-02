@@ -46,6 +46,19 @@ from module4.validation import (
     prepare_reference,
 )
 from module4.webapp._page import PageSpec
+from module4.webapp.design.components import (
+    ImageItem,
+    configuration_card,
+    data_table,
+    image_card,
+    image_comparison,
+    metric_row,
+    parameter_group,
+    section_header,
+    status_chips,
+    upload_panel,
+)
+from module4.webapp.design.components import page_header as kit_page_header
 from module4.webapp.ui import (
     IMAGE_TYPES,
     bundled_sample_notice,
@@ -417,7 +430,7 @@ def _sam2_prompt_controls(width: int, height: int, classical_roi: ROI | None) ->
 
     default_x = min(width - 1, max(0, width // 4))
     default_y = min(height - 1, max(0, height // 4))
-    c1, c2, c3, c4 = st.columns(4)
+    c1, c2, c3, c4 = st.columns(4, vertical_alignment="bottom")
     prompt_x = int(c1.number_input("SAM2 prompt x", min_value=0, max_value=width - 1, value=default_x, step=1))
     prompt_y = int(c2.number_input("SAM2 prompt y", min_value=0, max_value=height - 1, value=default_y, step=1))
     prompt_width = int(
@@ -478,34 +491,59 @@ def _sam2_configuration() -> SAM2Config:
     )
 
 
-def _show_metrics(result_mask, reference_mask, *, reference_label: str, alignment: object) -> SegmentationMetrics:
-    """Render the shared validated pixel-level comparison panel."""
+def _show_metrics(
+    result_mask,
+    reference_mask,
+    *,
+    reference_label: str,
+    reference_origin: str,
+    alignment: object,
+) -> SegmentationMetrics:
+    """Render the Evaluation section for a validated prediction/reference mask pair.
+
+    ``reference_origin`` names where the reference came from (bundled ground truth, an
+    uploaded mask, or SAM2) so the metrics are never shown without their provenance.
+    """
     metrics = evaluate_masks(result_mask, reference_mask)
-    st.subheader("4. Validation, overlap, and metrics")
-    st.caption("Reference status: Available. Metrics use validated canonical masks.")
-    c1, c2, c3 = st.columns(3)
-    with c1:
-        st.image(display_mask(reference_mask), caption=f"{reference_label} mask", width="stretch")
-    with c2:
-        st.image(
+    section_header(
+        "Evaluation",
+        description="Reference status: Available. Metrics use validated canonical masks.",
+    )
+    status_chips(
+        [
+            (f"Reference: {reference_label}", "info"),
+            (f"Source: {reference_origin}", "neutral"),
+            (f"Alignment: {alignment.transformation if alignment else 'none'}", "neutral"),
+            (f"Reference size: {reference_mask.shape[1]} x {reference_mask.shape[0]} px", "neutral"),
+        ]
+    )
+    metric_row(
+        [
+            ("IoU", f"{metrics.iou:.4f}"),
+            ("Dice", f"{metrics.dice:.4f}"),
+            ("Precision", f"{metrics.precision:.4f}"),
+            ("Recall", f"{metrics.recall:.4f}"),
+        ]
+    )
+    st.markdown("**Confusion counts (pixels)**")
+    data_table(
+        [
+            {"Count": "TP", "Meaning": "Predicted foreground, reference foreground", "Pixels": metrics.tp},
+            {"Count": "FP", "Meaning": "Predicted foreground, reference background", "Pixels": metrics.fp},
+            {"Count": "FN", "Meaning": "Predicted background, reference foreground", "Pixels": metrics.fn},
+            {"Count": "TN", "Meaning": "Predicted background, reference background", "Pixels": metrics.tn},
+        ],
+        hide_index=True,
+        column_config={"Pixels": st.column_config.NumberColumn("Pixels", format="%d")},
+    )
+    image_comparison(
+        ImageItem(display_mask(reference_mask), caption=f"{reference_label} mask"),
+        ImageItem(
             bgr_to_rgb(mask_overlap_bgr(result_mask, reference_mask)),
             caption="Overlap: TP green, FP red, FN blue",
-            width="stretch",
-        )
-    with c3:
-        st.write(f"Reference type: **{reference_label}**")
-        st.write("Reference status: **Available**")
-        st.write(f"Alignment: **{alignment.transformation if alignment else 'none'}**")
-        st.write(f"Reference dimensions: **{reference_mask.shape[1]} x {reference_mask.shape[0]}**")
-    st.subheader("IoU, Dice, Precision, Recall, and confusion counts")
-    metric_columns = st.columns(4)
-    for column, label, value in zip(
-        metric_columns,
-        ("IoU", "Dice", "Precision", "Recall"),
-        (metrics.iou, metrics.dice, metrics.precision, metrics.recall),
-    ):
-        column.metric(label, f"{value:.4f}")
-    st.write(f"TP: **{metrics.tp}** | FP: **{metrics.fp}** | FN: **{metrics.fn}** | TN: **{metrics.tn}**")
+        ),
+        bordered=False,
+    )
     return metrics
 
 
@@ -538,25 +576,31 @@ def _synthetic_fourier_example() -> np.ndarray:
     return np.repeat(row[None, :], rows, axis=0)
 
 
+_COMPARISON_INTRO = (
+    "Compare a completed classical mask with an uploaded reference mask or optional SAM2 "
+    "reference segmentation. Validation precedes overlap visualization and metrics."
+)
+
+
 def _comparison_page() -> None:
-    page_header(
-        "Comparison and Evaluation",
-        assignment_label="Supporting evaluation",
-        summary=(
-            "Compare a completed classical mask with an uploaded reference mask or optional SAM2 "
-            "reference segmentation. Validation precedes overlap visualization and metrics."
-        ),
-        input_hint=(
-            "RGB or thermal image, plus an optional binary reference or optional SAM2 configuration."
-        ),
+    kit_page_header(
+        "Supporting evaluation: Comparison and Evaluation",
+        eyebrow=_MODULE,
+        description=_COMPARISON_INTRO,
+    )
+    st.caption(
+        "Expected input: RGB or thermal image, plus an optional binary reference or optional "
+        "SAM2 configuration."
     )
     st.caption(
         "Flow: classical mask → reference mask → validation → overlap visualization → "
         "IoU/Dice/Precision/Recall and confusion counts."
     )
+
+    section_header("Input")
     modality_label = st.radio("Modality", ["RGB", "Thermal"], horizontal=True)
     modality = modality_label.lower()
-    upload = st.file_uploader("Input image", type=IMAGE_TYPES, key="comparison_input")
+    upload = upload_panel("Input image", type=IMAGE_TYPES, key="comparison_input")
 
     using_sample = False
     sample_reference_path = (
@@ -592,62 +636,77 @@ def _comparison_page() -> None:
             return
 
     height, width = source.shape[:2]
-    st.caption(
+    input_caption = (
         f"Input: {source_name} | {width} x {height} pixels | "
         f"computational source dtype: {source.dtype}"
     )
     if modality == "rgb":
-        st.image(bgr_to_rgb(source), caption="Original RGB image", width="stretch")
+        preview_column, _ = st.columns([3, 2])
+        with preview_column:
+            image_card(bgr_to_rgb(source), caption="Original RGB image", bordered=False)
+        st.caption(input_caption)
         if width < 2 or height < 2:
             st.error("The RGB image must be at least 2 x 2 pixels for ROI-assisted GrabCut.")
             return
-        st.subheader("1. Classical input and parameters")
         default_x = _SAMPLE_ROI.x if using_sample else width // 4
         default_y = _SAMPLE_ROI.y if using_sample else height // 8
         default_w = _SAMPLE_ROI.width if using_sample else min(max(2, width // 2), width)
         default_h = _SAMPLE_ROI.height if using_sample else min(max(2, (height * 3) // 4), height)
-        c1, c2, c3, c4 = st.columns(4)
-        x = int(c1.number_input("ROI x", min_value=0, max_value=width - 2, value=min(default_x, width - 2), step=1))
-        y = int(c2.number_input("ROI y", min_value=0, max_value=height - 2, value=min(default_y, height - 2), step=1))
-        roi_width = int(
-            c3.number_input(
-                "ROI width",
-                min_value=2,
-                max_value=width - x,
-                value=min(max(2, default_w), width - x),
-                step=1,
-            )
-        )
-        roi_height = int(
-            c4.number_input(
-                "ROI height",
-                min_value=2,
-                max_value=height - y,
-                value=min(max(2, default_h), height - y),
-                step=1,
-            )
-        )
-        iterations = int(
-            st.slider(
-                "GrabCut iterations", 1, 15,
-                _SAMPLE_RGB_PARAMS["grabcut_iterations"] if using_sample else 5,
-                key="comparison_rgb_iterations",
-            )
-        )
-        opening_size = int(
-            st.select_slider(
-                "Opening kernel", [1, 3, 5, 7],
-                value=_SAMPLE_RGB_PARAMS["opening_kernel_size"] if using_sample else 3,
-                key="comparison_rgb_opening",
-            )
-        )
-        closing_size = int(
-            st.select_slider(
-                "Closing kernel", [1, 3, 5, 7],
-                value=_SAMPLE_RGB_PARAMS["closing_kernel_size"] if using_sample else 5,
-                key="comparison_rgb_closing",
-            )
-        )
+        with configuration_card(
+            "Classical Configuration",
+            caption="Parameters for the classical OpenCV pipeline (ROI-assisted GrabCut).",
+        ):
+            with parameter_group(
+                "Region of interest",
+                help="Rectangle in input-image pixels; x and y are its top-left corner.",
+            ):
+                c1, c2, c3, c4 = st.columns(4)
+                x = int(c1.number_input("ROI x", min_value=0, max_value=width - 2, value=min(default_x, width - 2), step=1))
+                y = int(c2.number_input("ROI y", min_value=0, max_value=height - 2, value=min(default_y, height - 2), step=1))
+                roi_width = int(
+                    c3.number_input(
+                        "ROI width",
+                        min_value=2,
+                        max_value=width - x,
+                        value=min(max(2, default_w), width - x),
+                        step=1,
+                    )
+                )
+                roi_height = int(
+                    c4.number_input(
+                        "ROI height",
+                        min_value=2,
+                        max_value=height - y,
+                        value=min(max(2, default_h), height - y),
+                        step=1,
+                    )
+                )
+            with parameter_group("GrabCut and morphology"):
+                c1, c2, c3 = st.columns(3)
+                with c1:
+                    iterations = int(
+                        st.slider(
+                            "GrabCut iterations", 1, 15,
+                            _SAMPLE_RGB_PARAMS["grabcut_iterations"] if using_sample else 5,
+                            key="comparison_rgb_iterations",
+                        )
+                    )
+                with c2:
+                    opening_size = int(
+                        st.select_slider(
+                            "Opening kernel", [1, 3, 5, 7],
+                            value=_SAMPLE_RGB_PARAMS["opening_kernel_size"] if using_sample else 3,
+                            key="comparison_rgb_opening",
+                        )
+                    )
+                with c3:
+                    closing_size = int(
+                        st.select_slider(
+                            "Closing kernel", [1, 3, 5, 7],
+                            value=_SAMPLE_RGB_PARAMS["closing_kernel_size"] if using_sample else 5,
+                            key="comparison_rgb_closing",
+                        )
+                    )
         roi = ROI(x, y, roi_width, roi_height)
         config: RGBPipelineConfig | ThermalPipelineConfig = RGBPipelineConfig(
             grabcut_iterations=iterations,
@@ -662,79 +721,89 @@ def _comparison_page() -> None:
             return
         if source.ndim == 3 and source.shape[2] == 3:
             st.warning("This input is a false-color BGR palette. Palette colors are not calibrated physical temperature.")
-        st.image(
-            bgr_to_rgb(source_preview),
-            caption="Thermal source preview (display scaling only)",
-            width="stretch",
-        )
-        st.subheader("1. Classical input and parameters")
-        use_roi = st.checkbox("Use an optional ROI", value=using_sample, key="comparison_thermal_use_roi")
-        roi = None
-        if use_roi:
-            if width < 2 or height < 2:
-                st.error("An ROI requires an image at least 2 x 2 pixels.")
-                return
-            default_x = _SAMPLE_ROI.x if using_sample else width // 4
-            default_y = _SAMPLE_ROI.y if using_sample else height // 4
-            default_w = _SAMPLE_ROI.width if using_sample else min(max(2, width // 2), width)
-            default_h = _SAMPLE_ROI.height if using_sample else min(max(2, height // 2), height)
-            c1, c2, c3, c4 = st.columns(4)
-            x = int(c1.number_input("ROI x", min_value=0, max_value=width - 2, value=min(default_x, width - 2), step=1))
-            y = int(c2.number_input("ROI y", min_value=0, max_value=height - 2, value=min(default_y, height - 2), step=1))
-            roi_width = int(
-                c3.number_input(
-                    "ROI width",
-                    min_value=2,
-                    max_value=width - x,
-                    value=min(max(2, default_w), width - x),
-                    step=1,
-                )
+        preview_column, _ = st.columns([3, 2])
+        with preview_column:
+            image_card(
+                bgr_to_rgb(source_preview),
+                caption="Thermal source preview (display scaling only)",
+                bordered=False,
             )
-            roi_height = int(
-                c4.number_input(
-                    "ROI height",
-                    min_value=2,
-                    max_value=height - y,
-                    value=min(max(2, default_h), height - y),
-                    step=1,
-                )
-            )
-            roi = ROI(x, y, roi_width, roi_height)
-        gaussian_size = int(
-            st.select_slider(
-                "Gaussian kernel", [1, 3, 5],
-                value=_SAMPLE_THERMAL_PARAMS["gaussian_blur_kernel_size"] if using_sample else 1,
-                key="comparison_thermal_gaussian",
-            )
-        )
-        opening_size = int(
-            st.select_slider(
-                "Opening kernel", [1, 3, 5, 7],
-                value=_SAMPLE_THERMAL_PARAMS["opening_kernel_size"] if using_sample else 3,
-                key="comparison_thermal_opening",
-            )
-        )
-        closing_size = int(
-            st.select_slider(
-                "Closing kernel", [1, 3, 5, 7],
-                value=_SAMPLE_THERMAL_PARAMS["closing_kernel_size"] if using_sample else 5,
-                key="comparison_thermal_closing",
-            )
-        )
+        st.caption(input_caption)
+        with configuration_card(
+            "Classical Configuration",
+            caption="Parameters for the classical OpenCV thermal pipeline.",
+        ):
+            with parameter_group(
+                "Region of interest",
+                help="Optional rectangle in input-image pixels; x and y are its top-left corner.",
+            ):
+                use_roi = st.checkbox("Use an optional ROI", value=using_sample, key="comparison_thermal_use_roi")
+                roi = None
+                if use_roi:
+                    if width < 2 or height < 2:
+                        st.error("An ROI requires an image at least 2 x 2 pixels.")
+                        return
+                    default_x = _SAMPLE_ROI.x if using_sample else width // 4
+                    default_y = _SAMPLE_ROI.y if using_sample else height // 4
+                    default_w = _SAMPLE_ROI.width if using_sample else min(max(2, width // 2), width)
+                    default_h = _SAMPLE_ROI.height if using_sample else min(max(2, height // 2), height)
+                    c1, c2, c3, c4 = st.columns(4)
+                    x = int(c1.number_input("ROI x", min_value=0, max_value=width - 2, value=min(default_x, width - 2), step=1))
+                    y = int(c2.number_input("ROI y", min_value=0, max_value=height - 2, value=min(default_y, height - 2), step=1))
+                    roi_width = int(
+                        c3.number_input(
+                            "ROI width",
+                            min_value=2,
+                            max_value=width - x,
+                            value=min(max(2, default_w), width - x),
+                            step=1,
+                        )
+                    )
+                    roi_height = int(
+                        c4.number_input(
+                            "ROI height",
+                            min_value=2,
+                            max_value=height - y,
+                            value=min(max(2, default_h), height - y),
+                            step=1,
+                        )
+                    )
+                    roi = ROI(x, y, roi_width, roi_height)
+            with parameter_group("Smoothing and morphology"):
+                c1, c2, c3 = st.columns(3)
+                with c1:
+                    gaussian_size = int(
+                        st.select_slider(
+                            "Gaussian kernel", [1, 3, 5],
+                            value=_SAMPLE_THERMAL_PARAMS["gaussian_blur_kernel_size"] if using_sample else 1,
+                            key="comparison_thermal_gaussian",
+                        )
+                    )
+                with c2:
+                    opening_size = int(
+                        st.select_slider(
+                            "Opening kernel", [1, 3, 5, 7],
+                            value=_SAMPLE_THERMAL_PARAMS["opening_kernel_size"] if using_sample else 3,
+                            key="comparison_thermal_opening",
+                        )
+                    )
+                with c3:
+                    closing_size = int(
+                        st.select_slider(
+                            "Closing kernel", [1, 3, 5, 7],
+                            value=_SAMPLE_THERMAL_PARAMS["closing_kernel_size"] if using_sample else 5,
+                            key="comparison_thermal_closing",
+                        )
+                    )
         config = ThermalPipelineConfig(
             gaussian_blur_kernel_size=gaussian_size,
             opening_kernel_size=opening_size,
             closing_kernel_size=closing_size,
         )
 
-    st.subheader("2. Reference selection")
-    reference_source_options = ["None", "Uploaded reference mask", "SAM2 reference"]
-    reference_source = st.radio(
-        "Reference source",
-        reference_source_options,
-        index=reference_source_options.index("Uploaded reference mask") if using_sample else 0,
-        horizontal=True,
-        key="comparison_reference_source",
+    section_header(
+        "Reference",
+        description="The mask the classical prediction is compared against. It never changes the prediction.",
     )
     reference_upload = None
     reference_type = None
@@ -742,54 +811,62 @@ def _comparison_page() -> None:
     explicit_alignment = False
     sam2_prompt = None
     sam2_config = None
-    if reference_source == "Uploaded reference mask":
-        reference_upload = st.file_uploader(
-            "Binary reference mask",
-            type=IMAGE_TYPES,
-            key="comparison_reference",
-            help="Accepted mask pixels are bool-equivalent uint8 values 0, 1, and 255. Other grayscale values are rejected.",
+    with configuration_card("Reference Configuration"):
+        reference_source_options = ["None", "Uploaded reference mask", "SAM2 reference"]
+        reference_source = st.radio(
+            "Reference source",
+            reference_source_options,
+            index=reference_source_options.index("Uploaded reference mask") if using_sample else 0,
+            horizontal=True,
+            key="comparison_reference_source",
         )
-        reference_type = st.selectbox(
-            "Reference type",
-            ["ground_truth", "user_reference"],
-            format_func=lambda value: value.replace("_", " ").title(),
-            key="comparison_reference_type",
-        )
-        reference_image_id = st.text_input(
-            "Reference image ID",
-            value=source_name,
-            key="comparison_reference_image_id",
-            help="Must match the input image ID exactly; this prevents cross-image comparisons.",
-        )
-        explicit_alignment = st.checkbox(
-            "Explicitly align a mismatched reference with nearest-neighbor resize",
-            value=False,
-            key="comparison_reference_alignment",
-            help="No resizing occurs unless this control is selected.",
-        )
-        if using_sample and reference_upload is None:
-            bundled_sample_notice(
-                "No reference mask uploaded: using the bundled real ground-truth mask for "
-                "this frame. Upload your own to override."
+        if reference_source == "Uploaded reference mask":
+            reference_upload = st.file_uploader(
+                "Binary reference mask",
+                type=IMAGE_TYPES,
+                key="comparison_reference",
+                help="Accepted mask pixels are bool-equivalent uint8 values 0, 1, and 255. Other grayscale values are rejected.",
             )
-    elif reference_source == "SAM2 reference":
-        status_message(
-            "SAM2 integration",
-            "Implemented",
-            "The optional reference adapter is available without changing the classical pipeline.",
-        )
-        status_message(
-            "Real SAM2 reference inference",
-            "Available (optional)",
-            "Configure the optional official environment and local checkpoint to generate a real "
-            "reference segmentation.",
-        )
-        st.caption(
-            "SAM2 is an optional reference segmentation, not ground truth. It never changes the "
-            "classical prediction."
-        )
-        sam2_prompt = _sam2_prompt_controls(width, height, roi)
-        sam2_config = _sam2_configuration()
+            c1, c2 = st.columns(2)
+            with c1:
+                reference_type = st.selectbox(
+                    "Reference type",
+                    ["ground_truth", "user_reference"],
+                    format_func=lambda value: value.replace("_", " ").title(),
+                    key="comparison_reference_type",
+                )
+            with c2:
+                reference_image_id = st.text_input(
+                    "Reference image ID",
+                    value=source_name,
+                    key="comparison_reference_image_id",
+                    help="Must match the input image ID exactly; this prevents cross-image comparisons.",
+                )
+            explicit_alignment = st.checkbox(
+                "Explicitly align a mismatched reference with nearest-neighbor resize",
+                value=False,
+                key="comparison_reference_alignment",
+                help="No resizing occurs unless this control is selected.",
+            )
+            if using_sample and reference_upload is None:
+                bundled_sample_notice(
+                    "No reference mask uploaded: using the bundled real ground-truth mask for "
+                    "this frame. Upload your own to override."
+                )
+        elif reference_source == "SAM2 reference":
+            st.info(
+                "**SAM2 reference segmentation (optional).** SAM2 is an optional reference "
+                "segmentation, not ground truth. It never changes the classical prediction. A "
+                "real SAM2 reference requires the separate official SAM2 environment and a local "
+                "checkpoint; without them the run reports SAM2 as unavailable and generates no "
+                "metrics."
+            )
+            with parameter_group(
+                "SAM2 box prompt",
+                help="An independent rectangle in input-image pixels; x and y are its top-left corner.",
+            ):
+                sam2_prompt = _sam2_prompt_controls(width, height, roi)
+            sam2_config = _sam2_configuration()
 
     if not using_sample and not st.button("Run classical pipeline and evaluate reference", type="primary"):
         pending_experiment_banner("Run the classical pipeline to produce a prediction and evaluate the selected reference if available.")
@@ -804,12 +881,17 @@ def _comparison_page() -> None:
         st.error(f"Classical {modality_label.lower()} segmentation could not run: {exc}")
         return
 
-    st.subheader("3. Classical mask")
-    st.image(display_mask(result.final_mask), caption="Final classical mask", width="stretch")
-    st.image(
-        bgr_to_rgb(result.boundary_overlay_bgr),
-        caption="Boundary overlay derived from final classical mask",
-        width="stretch",
+    section_header(
+        "Classical Prediction",
+        description="The final classical mask and the boundary derived from it.",
+    )
+    image_comparison(
+        ImageItem(display_mask(result.final_mask), caption="Final classical mask"),
+        ImageItem(
+            bgr_to_rgb(result.boundary_overlay_bgr),
+            caption="Boundary overlay derived from final classical mask",
+        ),
+        bordered=False,
     )
     if modality == "thermal":
         st.write(f"Selected polarity: **{result.selected_polarity or 'none'}**; status: **{result.status}**")
@@ -817,14 +899,15 @@ def _comparison_page() -> None:
         st.warning(warning)
 
     if reference_source == "None":
-        status_message(
-            "Reference status",
-            "Pending",
-            "Metrics are unavailable until a valid reference mask exists.",
+        section_header("Evaluation")
+        st.info(
+            "**No reference selected.** Metrics are unavailable until a valid reference mask "
+            "exists. Choose an uploaded reference mask or the SAM2 reference above."
         )
         return
 
     if reference_source == "SAM2 reference":
+        section_header("SAM2 Reference")
         if sam2_prompt is None or sam2_config is None:
             st.error("A valid independent SAM2 box prompt is required; no reference metrics were generated.")
             return
@@ -837,29 +920,24 @@ def _comparison_page() -> None:
                 source_image_id=source_name,
             )
         except (TypeError, ValueError) as exc:
-            status_message(
-                "SAM2 reference",
-                "Failed",
-                f"SAM2 reference could not be prepared; metrics were not generated: {exc}",
-            )
+            st.error(f"**SAM2 reference: Failed.** SAM2 reference could not be prepared; metrics were not generated: {exc}")
             return
         if sam2_result.status != "completed" or sam2_result.mask is None:
             if sam2_result.status == "failed":
-                status_message(
-                    "SAM2 reference",
-                    "Failed",
-                    f"SAM2 reference inference failed; metrics were not generated: {sam2_result.error}",
+                st.error(
+                    f"**SAM2 reference: Failed.** SAM2 reference inference failed; metrics were not "
+                    f"generated: {sam2_result.error}"
                 )
             else:
-                status_message(
-                    "SAM2 reference",
-                    "Unavailable",
-                    f"SAM2 reference is {sam2_result.status}; metrics were not generated. "
-                    f"{sam2_result.error or 'Configure the optional official SAM2 environment and checkpoint.'}",
+                st.warning(
+                    f"**SAM2 reference: Unavailable.** SAM2 reference is {sam2_result.status}; metrics "
+                    f"were not generated. "
+                    f"{sam2_result.error or 'Configure the optional official SAM2 environment and checkpoint.'}"
+                    "\n\nNo placeholder mask or metrics were generated. To evaluate the classical "
+                    "prediction without SAM2, choose Uploaded reference mask as the reference source."
                 )
-                st.caption("No placeholder mask or metrics were generated.")
             return
-        st.subheader("SAM2 reference provenance")
+        st.markdown("**Provenance**")
         st.write(
             f"Model: **{sam2_result.model_name}** | config: **{sam2_result.model_config}** | "
             f"checkpoint: **{sam2_result.checkpoint_identifier or 'not recorded'}** | device: **{sam2_result.device or 'not recorded'}**"
@@ -881,21 +959,25 @@ def _comparison_page() -> None:
             if prepared.mask is None:
                 raise ReferenceValidationError("SAM2 reference validation returned no mask")
         except (ReferenceValidationError, TypeError, ValueError) as exc:
-            status_message(
-                "SAM2 reference validation",
-                "Failed",
-                f"SAM2 reference validation failed; metrics were not generated: {exc}",
-            )
+            st.error(f"**SAM2 reference validation: Failed.** SAM2 reference validation failed; metrics were not generated: {exc}")
             return
-        _show_metrics(result.final_mask, prepared.mask, reference_label="SAM2 reference segmentation", alignment=prepared.alignment)
-        st.caption("Metrics compare the classical mask with the SAM2 reference segmentation; no ground-truth claim is made.")
+        _show_metrics(
+            result.final_mask,
+            prepared.mask,
+            reference_label="SAM2 reference segmentation",
+            reference_origin="SAM2 run on this image",
+            alignment=prepared.alignment,
+        )
+        section_header("Interpretation")
+        st.markdown(_METRIC_DEFINITIONS)
+        st.markdown("Metrics compare the classical mask with the SAM2 reference segmentation; no ground-truth claim is made.")
         return
 
     if reference_upload is None and not (using_sample and sample_reference_path.is_file()):
-        status_message(
-            "Reference status",
-            "Pending",
-            "Uploaded reference mask is pending; IoU, Dice, Precision, Recall, and confusion counts are unavailable.",
+        section_header("Evaluation")
+        st.info(
+            "**Reference mask not uploaded.** IoU, Dice, Precision, Recall, and confusion counts "
+            "are unavailable until a binary reference mask is uploaded above."
         )
         return
     try:
@@ -926,18 +1008,33 @@ def _comparison_page() -> None:
             alignment = prepared.alignment
         metrics = evaluate_masks(result.final_mask, reference_mask)
     except (ReferenceValidationError, TypeError, ValueError) as exc:
-        status_message(
-            "Reference validation",
-            "Failed",
-            f"Reference validation failed; metrics were not generated: {exc}",
-        )
+        section_header("Evaluation")
+        st.error(f"**Reference validation: Failed.** Reference validation failed; metrics were not generated: {exc}")
         return
 
-    _show_metrics(result.final_mask, reference_mask, reference_label=reference_type.replace("_", " "), alignment=alignment)
-    st.caption(
+    _show_metrics(
+        result.final_mask,
+        reference_mask,
+        reference_label=reference_type.replace("_", " "),
+        reference_origin=(
+            "uploaded reference mask" if reference_upload is not None else "bundled AAU VAP ground-truth mask"
+        ),
+        alignment=alignment,
+    )
+    section_header("Interpretation")
+    st.markdown(_METRIC_DEFINITIONS)
+    st.markdown(
         "All metrics use aligned canonical masks. A reference is metadata/provenance input, not a "
         "segmentation input; SAM2 is optional and Fourier analysis is provided on its separate theory page."
     )
+
+
+_METRIC_DEFINITIONS = (
+    "With A the classical mask and B the reference: IoU = |A ∩ B| / |A ∪ B| and Dice = "
+    "2|A ∩ B| / (|A| + |B|) measure overlap; Precision = TP / (TP + FP) is the share of "
+    "predicted foreground that the reference also marks; Recall = TP / (TP + FN) is the share of "
+    "reference foreground that the prediction recovers."
+)
 
 
 def _theory_page() -> None:
