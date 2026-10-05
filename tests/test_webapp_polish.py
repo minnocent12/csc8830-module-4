@@ -42,7 +42,8 @@ def test_thermal_page_explains_dual_polarity_classical_processing() -> None:
 
     assert not app.exception
     assert any("Question 2" in item.value for item in app.header)
-    assert any("bright and dark" in item.value for item in app.info)
+    # The explanation is the page description (ordinary text), not an alert.
+    assert any("bright and dark" in item.value for item in app.markdown)
 
 
 def test_comparison_page_evaluates_bundled_ground_truth_with_real_metrics() -> None:
@@ -95,4 +96,4 @@ def test_rgb_and_thermal_pages_run_their_major_ui_sections() -> None:
     app.file_uploader[0].set_value(_encoded_png(thermal)).run()
     app.button[0].click().run()
     assert not app.exception
-    assert any("Classical thermal intermediate results" in item.value for item in app.subheader)
+    assert any("Processing Results" in item.value for item in app.subheader)
