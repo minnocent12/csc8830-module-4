@@ -121,7 +121,7 @@ def _rgb_page() -> None:
             "the real predefined experiment location. Upload your own RGB image to override."
         )
     else:
-        pending_experiment_banner("Upload an RGB image to run the classical RGB segmentation pipeline.")
+        pending_experiment_banner("Upload an RGB image to begin.")
         return
 
     height, width = image_bgr.shape[:2]
@@ -196,7 +196,7 @@ def _rgb_page() -> None:
         st.caption(f"Selected ROI: x={x}, y={y}, width={roi_width}, height={roi_height}")
 
     if not using_sample and not st.button("Run classical RGB segmentation", type="primary"):
-        pending_experiment_banner("Set the ROI and run the classical pipeline to view intermediate results.")
+        pending_experiment_banner("Set the ROI above, then select Run to view intermediate results.")
         return
 
     try:
@@ -295,7 +295,7 @@ def _thermal_page() -> None:
             "override."
         )
     else:
-        pending_experiment_banner("Upload a thermal image to run the classical thermal segmentation pipeline.")
+        pending_experiment_banner("Upload a thermal image to begin.")
         return
 
     height, width = image.shape[:2]
@@ -386,7 +386,7 @@ def _thermal_page() -> None:
                     )
                 )
     if not using_sample and not st.button("Run classical thermal segmentation", type="primary"):
-        pending_experiment_banner("Configure optional preprocessing/ROI settings and run the thermal pipeline.")
+        pending_experiment_banner("Configure the settings above, then select Run to view results.")
         return
 
     try:
@@ -724,7 +724,7 @@ def _comparison_page() -> None:
                 "Dataset (CC BY 4.0). Upload your own image to override."
             )
         else:
-            pending_experiment_banner("Upload an RGB or thermal image to run a comparison.")
+            pending_experiment_banner("Upload an RGB or thermal image to begin.")
             return
 
     height, width = source.shape[:2]
@@ -962,7 +962,7 @@ def _comparison_page() -> None:
             sam2_config = _sam2_configuration()
 
     if not using_sample and not st.button("Run classical pipeline and evaluate reference", type="primary"):
-        pending_experiment_banner("Run the classical pipeline to produce a prediction and evaluate the selected reference if available.")
+        pending_experiment_banner("Select Run above to compute the classical prediction and evaluate the reference.")
         return
 
     try:
