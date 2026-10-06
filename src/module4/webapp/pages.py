@@ -65,7 +65,6 @@ from module4.webapp.design.components import page_header as kit_page_header
 from module4.webapp.ui import (
     IMAGE_TYPES,
     bundled_sample_notice,
-    page_header,
     pending_experiment_banner,
 )
 from module4.visualization import bgr_to_rgb, display_mask, mask_overlap_bgr, to_display_uint8
@@ -87,16 +86,21 @@ _SAMPLE_RGB_PARAMS = {"grabcut_iterations": 5, "opening_kernel_size": 3, "closin
 _SAMPLE_THERMAL_PARAMS = {"gaussian_blur_kernel_size": 1, "opening_kernel_size": 3, "closing_kernel_size": 5}
 
 
+_RGB_INTRO = (
+    "Demonstrate ROI-assisted classical OpenCV human-boundary segmentation. You supply "
+    "the ROI; the final contour is derived from the final classical mask."
+)
+
+
 def _rgb_page() -> None:
-    page_header(
-        "RGB Human Boundary",
-        assignment_label="Question 1",
-        summary=(
-            "Demonstrate ROI-assisted classical OpenCV human-boundary segmentation. You supply "
-            "the ROI; the final contour is derived from the final classical mask."
-        ),
-        input_hint="RGB color image (OpenCV BGR uint8).",
+    kit_page_header(
+        "Question 1: RGB Human Boundary",
+        eyebrow=_MODULE,
+        description=_RGB_INTRO,
     )
+    st.caption("Expected input: RGB color image (OpenCV BGR uint8).")
+
+    section_header("Input")
     upload = st.file_uploader("RGB image", type=IMAGE_TYPES)
 
     using_sample = False
@@ -121,64 +125,75 @@ def _rgb_page() -> None:
         return
 
     height, width = image_bgr.shape[:2]
+    preview_column, _ = st.columns([3, 2])
+    with preview_column:
+        image_card(bgr_to_rgb(image_bgr), caption="Original RGB image", bordered=False)
     st.caption(f"Input: {source_name} | {width} x {height} pixels | OpenCV BGR uint8")
-    st.image(bgr_to_rgb(image_bgr), caption="Original RGB image", width="stretch")
     if width < 2 or height < 2:
         st.error("The image must be at least 2 x 2 pixels for ROI-assisted GrabCut.")
         return
 
-    st.subheader("User-supplied ROI")
-    st.caption("Classical RGB processing is not automatic: the rectangle must be supplied around the person.")
-    st.caption("The ROI is strict xywh: x and y are the upper-left pixel; width and height are pixels.")
     default_x = _SAMPLE_ROI.x if using_sample else width // 4
     default_y = _SAMPLE_ROI.y if using_sample else height // 8
     default_w = _SAMPLE_ROI.width if using_sample else min(max(2, width // 2), width)
     default_h = _SAMPLE_ROI.height if using_sample else min(max(2, (height * 3) // 4), height)
-    c1, c2, c3, c4 = st.columns(4)
-    x = int(c1.number_input("x", min_value=0, max_value=width - 2, value=min(default_x, width - 2), step=1))
-    y = int(c2.number_input("y", min_value=0, max_value=height - 2, value=min(default_y, height - 2), step=1))
-    roi_width = int(
-        c3.number_input(
-            "width",
-            min_value=2,
-            max_value=width - x,
-            value=min(max(2, default_w), width - x),
-            step=1,
-        )
-    )
-    roi_height = int(
-        c4.number_input(
-            "height",
-            min_value=2,
-            max_value=height - y,
-            value=min(max(2, default_h), height - y),
-            step=1,
-        )
-    )
-    iterations = int(
-        st.slider(
-            "GrabCut iterations",
-            min_value=1,
-            max_value=15,
-            value=_SAMPLE_RGB_PARAMS["grabcut_iterations"] if using_sample else 5,
-            help="More iterations can refine the classical optimization.",
-        )
-    )
-    opening_size = int(
-        st.select_slider(
-            "Opening kernel",
-            options=[1, 3, 5, 7],
-            value=_SAMPLE_RGB_PARAMS["opening_kernel_size"] if using_sample else 3,
-        )
-    )
-    closing_size = int(
-        st.select_slider(
-            "Closing kernel",
-            options=[1, 3, 5, 7],
-            value=_SAMPLE_RGB_PARAMS["closing_kernel_size"] if using_sample else 5,
-        )
-    )
-    st.caption(f"Selected ROI: x={x}, y={y}, width={roi_width}, height={roi_height}")
+    with configuration_card(
+        "Configuration",
+        caption="Parameters for the classical OpenCV pipeline (ROI-assisted GrabCut).",
+    ):
+        with parameter_group("User-supplied ROI"):
+            st.caption("Classical RGB processing is not automatic: the rectangle must be supplied around the person.")
+            st.caption("The ROI is strict xywh: x and y are the upper-left pixel; width and height are pixels.")
+            c1, c2, c3, c4 = st.columns(4)
+            x = int(c1.number_input("x", min_value=0, max_value=width - 2, value=min(default_x, width - 2), step=1))
+            y = int(c2.number_input("y", min_value=0, max_value=height - 2, value=min(default_y, height - 2), step=1))
+            roi_width = int(
+                c3.number_input(
+                    "width",
+                    min_value=2,
+                    max_value=width - x,
+                    value=min(max(2, default_w), width - x),
+                    step=1,
+                )
+            )
+            roi_height = int(
+                c4.number_input(
+                    "height",
+                    min_value=2,
+                    max_value=height - y,
+                    value=min(max(2, default_h), height - y),
+                    step=1,
+                )
+            )
+        with parameter_group("GrabCut and morphology"):
+            c1, c2, c3 = st.columns(3, vertical_alignment="bottom")
+            with c1:
+                iterations = int(
+                    st.slider(
+                        "GrabCut iterations",
+                        min_value=1,
+                        max_value=15,
+                        value=_SAMPLE_RGB_PARAMS["grabcut_iterations"] if using_sample else 5,
+                        help="More iterations can refine the classical optimization.",
+                    )
+                )
+            with c2:
+                opening_size = int(
+                    st.select_slider(
+                        "Opening kernel",
+                        options=[1, 3, 5, 7],
+                        value=_SAMPLE_RGB_PARAMS["opening_kernel_size"] if using_sample else 3,
+                    )
+                )
+            with c3:
+                closing_size = int(
+                    st.select_slider(
+                        "Closing kernel",
+                        options=[1, 3, 5, 7],
+                        value=_SAMPLE_RGB_PARAMS["closing_kernel_size"] if using_sample else 5,
+                    )
+                )
+        st.caption(f"Selected ROI: x={x}, y={y}, width={roi_width}, height={roi_height}")
 
     if not using_sample and not st.button("Run classical RGB segmentation", type="primary"):
         pending_experiment_banner("Set the ROI and run the classical pipeline to view intermediate results.")
@@ -198,26 +213,30 @@ def _rgb_page() -> None:
         st.error(f"RGB segmentation could not run: {exc}")
         return
 
-    st.subheader("Processing sequence")
+    section_header("Processing Results")
+    st.markdown("**Processing sequence**")
     st.caption(
         "Original → user ROI → GrabCut → morphology → selected component → final classical mask → "
         "contour/boundary overlay"
     )
-    st.subheader("Classical OpenCV intermediate results")
-    c1, c2, c3 = st.columns(3)
-    with c1:
-        st.image(bgr_to_rgb(result.roi_overlay_bgr), caption="Original RGB image with user ROI", width="stretch")
-    with c2:
-        st.image(to_display_uint8(result.grayscale), caption="Grayscale diagnostic", width="stretch")
-    with c3:
-        st.image(display_mask(result.raw_foreground_mask), caption="GrabCut raw foreground candidate", width="stretch")
-    c1, c2, c3 = st.columns(3)
-    with c1:
-        st.image(display_mask(result.cleaned_foreground_mask), caption="Morphology-cleaned foreground candidate", width="stretch")
-    with c2:
-        st.image(display_mask(result.final_mask), caption="Final classical RGB mask", width="stretch")
-    with c3:
-        st.image(bgr_to_rgb(result.boundary_overlay_bgr), caption="Boundary overlay derived from final mask", width="stretch")
+    st.markdown("**User ROI and diagnostics**")
+    image_comparison(
+        ImageItem(bgr_to_rgb(result.roi_overlay_bgr), caption="Original RGB image with user ROI"),
+        ImageItem(to_display_uint8(result.grayscale), caption="Grayscale diagnostic"),
+        bordered=False,
+    )
+    st.markdown("**Foreground candidates**")
+    image_comparison(
+        ImageItem(display_mask(result.raw_foreground_mask), caption="GrabCut raw foreground candidate"),
+        ImageItem(display_mask(result.cleaned_foreground_mask), caption="Morphology-cleaned foreground candidate"),
+        bordered=False,
+    )
+    st.markdown("**Final mask and boundary**")
+    image_comparison(
+        ImageItem(display_mask(result.final_mask), caption="Final classical RGB mask"),
+        ImageItem(bgr_to_rgb(result.boundary_overlay_bgr), caption="Boundary overlay derived from final mask"),
+        bordered=False,
+    )
 
     if result.component_selection is None:
         st.warning("No valid foreground component was selected. The final mask is empty.")
@@ -229,6 +248,8 @@ def _rgb_page() -> None:
         )
     for warning in result.warnings:
         st.warning(warning)
+
+    section_header("Interpretation")
     st.caption(
         "Use Comparison and Evaluation to upload a reference and compute validated IoU, Dice, "
         "precision, recall, and confusion counts."
