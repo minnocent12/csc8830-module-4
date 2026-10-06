@@ -24,7 +24,8 @@ def test_rgb_page_explains_question_mapping_and_runs_bundled_sample() -> None:
 
     assert not app.exception
     assert any("Question 1" in item.value for item in app.header)
-    assert any("classical OpenCV" in item.value for item in app.info)
+    # The explanation is the page description (ordinary text), not an alert.
+    assert any("classical OpenCV" in item.value for item in app.markdown)
     # No upload: the committed AAU VAP frame is processed live instead of a pending banner.
     assert any("bundled real frame" in item.value for item in app.info)
     assert not any("Pending user data" in item.value for item in app.warning)
@@ -33,7 +34,9 @@ def test_rgb_page_explains_question_mapping_and_runs_bundled_sample() -> None:
     roi = {item.label: item.value for item in app.number_input}
     assert roi == {"x": 120, "y": 20, "width": 450, "height": 460}
     assert not app.button
-    assert any("Processing sequence" in item.value for item in app.subheader)
+    # The pipeline summary is kept as a labeled subsection inside Processing Results.
+    assert "Processing Results" in [item.value for item in app.subheader]
+    assert "**Processing sequence**" in [item.value for item in app.markdown]
 
 
 def test_thermal_page_explains_dual_polarity_classical_processing() -> None:
@@ -87,7 +90,7 @@ def test_rgb_and_thermal_pages_run_their_major_ui_sections() -> None:
     app.file_uploader[0].set_value(_encoded_png(rgb)).run()
     app.button[0].click().run()
     assert not app.exception
-    assert any("Processing sequence" in item.value for item in app.subheader)
+    assert "**Processing sequence**" in [item.value for item in app.markdown]
 
     thermal = np.zeros((48, 48), dtype=np.uint8)
     thermal[12:36, 16:32] = 220
