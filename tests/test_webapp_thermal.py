@@ -90,7 +90,9 @@ def test_header_is_canonical_and_shown_once(page: AppTest) -> None:
 
 
 def test_sections_follow_the_workflow(page: AppTest) -> None:
-    assert [s.value for s in page.subheader] == ["Input", "Processing Results", "Interpretation"]
+    assert [s.value for s in page.subheader] == [
+        "Input", "Processing Results", "Comparison with SAM2", "Interpretation",
+    ]
     assert "#### Configuration" in [m.value for m in page.markdown]
 
 
@@ -115,6 +117,11 @@ def test_page_shows_exactly_what_the_pipeline_computes(page: AppTest) -> None:
         "Dark candidate after morphology",
         "Final classical thermal mask",
         "Boundary overlay derived from final thermal mask",
+        "Classical OpenCV boundary (red)",
+        "SAM2 boundary (cyan)",
+        "Both boundaries: classical red, SAM2 cyan",
+        "SAM2 mask",
+        "Overlap: green both, red classical only, blue SAM2 only",
     ]
 
 
