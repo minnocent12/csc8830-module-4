@@ -127,7 +127,7 @@ def test_previously_broken_workflow_evaluates_without_manual_id_correction() -> 
         ("Precision", f"{expected.precision:.4f}"),
         ("Recall", f"{expected.recall:.4f}"),
     ]
-    (table,) = app.dataframe
+    table = app.dataframe[-1]  # the recorded SAM2 results and timing tables come first
     assert dict(zip(table.value["Count"], table.value["Pixels"])) == {
         "TP": expected.tp, "FP": expected.fp, "FN": expected.fn, "TN": expected.tn,
     }
@@ -174,13 +174,15 @@ def test_restoring_the_current_id_returns_the_field_to_auto_management() -> None
     assert _reference_id(app) == "second_frame.jpg"
 
 
-def test_sam2_reference_behavior_is_unchanged() -> None:
+def test_sam2_reference_has_no_reference_id_field() -> None:
+    # The bundled frame is a recorded dataset frame, so without a live SAM2 runtime its
+    # recorded official SAM2 output is the reference; no reference image ID is asked for.
     app = _page()
     app.radio(key="comparison_reference_source").set_value("SAM2 reference").run()
     assert not app.exception
     assert not any(w.key == ID_KEY for w in app.text_input)
-    assert any("SAM2 reference is unavailable" in item.value for item in app.warning)
-    assert not app.metric
+    html = " ".join(e.proto.body for e in app.get("html"))
+    assert "Source: recorded official SAM2 run on this frame" in html
 
 
 def test_reference_widgets_keep_labels_types_and_defaults() -> None:

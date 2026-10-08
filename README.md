@@ -4,21 +4,50 @@
 
 This is the independent Module 4 repository for Georgia State University CSc 8830 Computer
 Vision. The assignment will provide classical OpenCV human-boundary pipelines for RGB and
-thermal images, a strictly separated SAM2 reference comparison, and a Fourier-domain theory
-write-up covering Parts A-F.
+thermal images, the required comparison of both classical results with SAM2 (visual and
+numerical, every case), and a Fourier-domain theory write-up covering Parts A-F.
 
 ## Current status
 
 Phase 2 implements the ROI-assisted classical RGB pipeline, Phase 3 implements the classical
 thermal pipeline with dual-polarity Otsu segmentation, Phase 4 implements strict reference
-validation and pixel-level evaluation, Phase 5 implements an isolated optional official SAM2
-reference adapter plus comparison workflow, Phase 6 implements the Fourier Parts A–F theory and
+validation and pixel-level evaluation, Phase 5 implements the official SAM2 adapter
+(kept isolated because SAM2 is deep learning) plus comparison workflow, Phase 6 implements the Fourier Parts A–F theory and
 deterministic educational demonstrations, and Phase 7 completes assignment-wide Streamlit
 integration and UX polish. Phase 8 contains a controlled real-data RGB/thermal run on six fixed
 AAU VAP cases with generated masks, overlays, and metrics. Official SAM2.1 Hiera Tiny inference
 has now completed for the same six cases in an isolated official environment using Apple MPS; the
 additional masks, native scores, comparisons, and provenance are stored separately from the
-existing dataset-ground-truth results.
+existing dataset-ground-truth results. Processing time for both methods has been measured on the
+same cases, and rerunning both reproduced every recorded mask pixel for pixel.
+
+## Comparison with SAM2 (required by Questions 1 and 2)
+
+Every fixed case is compared with SAM2 visually and numerically, and both methods are also
+scored against the AAU VAP ground truth. Values below are means over three frames per image
+type (from `results/metrics/phase8_sam2_experiment_records.json`):
+
+| Type | OpenCV vs ground truth IoU | SAM2 vs ground truth IoU | OpenCV vs SAM2 IoU |
+|---|---:|---:|---:|
+| RGB | 0.4228 | 0.6584 | 0.3186 |
+| Thermal | 0.0277 | 0.6837 | 0.0220 |
+
+SAM2 gave the more accurate boundary on all six cases. The classical RGB mask contains almost
+all of the SAM2 person (recall 0.97-0.99 against SAM2) plus large background regions inside the
+box (precision about 0.31); the classical thermal pipeline selected the dark (background)
+polarity on these frames. Classical thermal runs in about 4 ms and GrabCut in 0.7-1.8 s per frame;
+SAM2.1 Hiera Tiny (38.96 M parameters, PyTorch) takes about 0.11 s on Apple MPS and 0.25 s on CPU
+per frame (`results/metrics/phase8_timing_summary.md`).
+
+Where to see it:
+
+- RGB and Thermal pages: a "Comparison with SAM2" section for the image on screen (both
+  boundaries, overlap, IoU/Dice/precision/recall against SAM2, and a three-way table against the
+  ground truth).
+- Comparison and Evaluation page: the full six-case table and the measured processing cost.
+- Final report, Section 4: side-by-side figures for every case
+  (`results/comparisons/*_side_by_side.png`) and a discussion of each assignment criterion.
+- [docs/SAM2_COMPARISON.md](docs/SAM2_COMPARISON.md): protocol, provenance, and full results.
 
 ## Setup
 
@@ -53,13 +82,17 @@ The current app exposes four consistently ordered pages:
 The RGB and Thermal pages perform classical OpenCV processing and expose their intermediate
 sequence. The RGB page requires a user-supplied ROI. The Thermal page evaluates both bright and
 dark Otsu hypotheses and distinguishes source intensity data from false-color display palettes.
-Comparison and Evaluation runs one classical pipeline, validates an explicitly uploaded reference
-or optional SAM2 reference segmentation, and reports metrics only when a valid reference is
-available. Fourier Theory visually separates Parts A–F theory from uploaded or deterministic
+Both pages end with a comparison against SAM2. Comparison and Evaluation lists the recorded SAM2
+results for all six cases with measured processing times, then runs one classical pipeline,
+validates SAM2 or an explicitly uploaded reference, and reports metrics only when a valid
+reference is available. Fourier Theory visually separates Parts A–F theory from uploaded or deterministic
 educational demonstrations.
 The canonical written theory is [docs/FOURIER_THEORY.md](docs/FOURIER_THEORY.md).
 
-The standalone app does not require SAM2.
+The standalone app does not need PyTorch or a SAM2 checkpoint installed. Without them it shows
+the recorded official SAM2 output for the dataset frames (matched by exact pixel content, never
+by file name) and computes the comparison metrics live against the classical result; SAM2 runs
+live on any other image when the environment below is installed.
 
 ### Visual theme
 
@@ -76,13 +109,15 @@ is marked `completed`.
 Requires `streamlit>=1.49,<2`; the test suite (`pip install -e ".[dev]"`) needs
 `streamlit>=1.56,<2` because its upload tests use `AppTest.file_uploader`.
 
-### Optional SAM2 reference environment
+### SAM2 environment (for running SAM2 live)
 
-The base installation intentionally does not install PyTorch or SAM2. The optional adapter uses
-a separate official `facebookresearch/sam2` checkout/environment. Follow the official SAM2
+The base installation intentionally does not install PyTorch or SAM2: SAM2 is a deep-learning
+model, and the assignment forbids ML/DL in the classical implementation, so it is kept in a
+separate environment and used only for the comparison. The adapter uses a separate official
+`facebookresearch/sam2` checkout/environment. Follow the official SAM2
 installation instructions, keep the checkpoint in the ignored local `checkpoints/` directory or
 outside this repository, and set `MODULE4_SAM2_CHECKPOINT` to its local path before using the SAM2
-option in Comparison and Evaluation. The exact API, model/config, checkpoint, prompt provenance,
+comparison on uploaded images. The exact API, model/config, checkpoint, prompt provenance,
 and completed evidence are documented in [docs/SAM2_COMPARISON.md](docs/SAM2_COMPARISON.md).
 
 ## Run tests
@@ -130,7 +165,19 @@ package, PyTorch, TorchVision, and OpenCV:
 
 The exporter uses the six unchanged manifest cases and supplies each predefined manifest ROI
 independently as a SAM2 box. It selects masks only by SAM2-native score and preserves the original
-Phase 8 classical-versus-dataset-ground-truth records. See
+Phase 8 classical-versus-dataset-ground-truth records.
+
+From the same environment, measure processing cost for both methods and confirm that both
+reproduce the recorded masks (writes `results/metrics/phase8_timing_*`):
+
+    PYTHONPATH="$PWD/src" python scripts/run_sam2_timing.py \
+      --checkpoint checkpoints/sam2.1_hiera_tiny.pt --devices mps cpu --repeats 5
+
+Regenerate the side-by-side figures from the committed masks (base environment, no model):
+
+    python scripts/build_sam2_comparison_figures.py
+
+See
 [docs/EXPERIMENTAL_RESULTS.md](docs/EXPERIMENTAL_RESULTS.md) and
 [docs/SAM2_COMPARISON.md](docs/SAM2_COMPARISON.md) for the actual recorded setup and results.
 
@@ -180,7 +227,7 @@ structural compatibility shape. The standalone Module 4 app remains the recommen
   initialization requirement.
 - Thermal processing distinguishes source intensity data from false-color display data, and
   considers both bright and dark foreground polarity.
-- SAM2 is an optional reference segmentation, never ground truth. Its adapter is isolated under
+- SAM2 is the required comparison method, never ground truth. Its adapter is isolated under
   `src/module4/reference/`, has no base dependency, and does not influence either classical
   pipeline. The fixed six-case official SAM2 evidence is recorded separately from the classical
   ground-truth evidence.

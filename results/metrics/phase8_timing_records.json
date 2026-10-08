@@ -1,0 +1,569 @@
+{
+  "description": "Measured processing cost of classical OpenCV pipelines and official SAM2 on the fixed Phase 8 cases.",
+  "host": {
+    "platform": "macOS-26.5.2-arm64-arm-64bit",
+    "machine": "arm64",
+    "processor": "arm",
+    "python": "3.12.10",
+    "opencv": "5.0.0",
+    "numpy": "2.5.3",
+    "torch": "2.14.1",
+    "opencv_threads": 12,
+    "torch_threads": 8
+  },
+  "repeats": 5,
+  "timer": "time.perf_counter, one warm-up per case and stage, accelerator synchronized",
+  "sam2_model": {
+    "model_config": "configs/sam2.1/sam2.1_hiera_t.yaml",
+    "checkpoint_identifier": "sam2.1_hiera_tiny.pt",
+    "implementation_version": "2b90b9f5ceec907a1c18123530e92e794ad901a4"
+  },
+  "sam2_parameter_count": 38962498,
+  "checkpoint_size_bytes": 156008466,
+  "sam2_model_load_ms": {
+    "mps": 482.2848750045523,
+    "cpu": 164.50812498806044
+  },
+  "cases": [
+    {
+      "experiment_id": "aau-vap-scene1-00085-rgb",
+      "image_id": "aau-vap-scene1-frame-00085",
+      "modality": "rgb",
+      "image_dimensions": [
+        480,
+        640
+      ],
+      "prompt_xywh": [
+        120,
+        20,
+        450,
+        460
+      ],
+      "classical": {
+        "median_ms": 1796.8068329792004,
+        "min_ms": 1786.9471659942064,
+        "max_ms": 1811.4706670166925,
+        "samples_ms": [
+          1811.4706670166925,
+          1799.7120410145726,
+          1789.7297909948975,
+          1786.9471659942064,
+          1796.8068329792004
+        ]
+      },
+      "classical_matches_frozen_mask": true,
+      "sam2": {
+        "mps": {
+          "encode": {
+            "median_ms": 100.75795798911713,
+            "min_ms": 100.23312497651204,
+            "max_ms": 528.2492919941433,
+            "samples_ms": [
+              528.2492919941433,
+              105.77295898110606,
+              100.75795798911713,
+              100.23312497651204,
+              100.43170899734832
+            ]
+          },
+          "decode": {
+            "median_ms": 6.153750000521541,
+            "min_ms": 6.073750002542511,
+            "max_ms": 6.353250006213784,
+            "samples_ms": [
+              6.287625001277775,
+              6.105874985223636,
+              6.073750002542511,
+              6.153750000521541,
+              6.353250006213784
+            ]
+          },
+          "total_median_ms": 106.91170798963867,
+          "selected_mask_index": 2,
+          "rerun_iou_vs_recorded": 1.0,
+          "rerun_equals_recorded": true
+        },
+        "cpu": {
+          "encode": {
+            "median_ms": 241.40787500073202,
+            "min_ms": 235.14845900353976,
+            "max_ms": 242.66216598334722,
+            "samples_ms": [
+              242.10454200510867,
+              241.40787500073202,
+              239.5100420108065,
+              235.14845900353976,
+              242.66216598334722
+            ]
+          },
+          "decode": {
+            "median_ms": 13.829165982315317,
+            "min_ms": 13.540542015107349,
+            "max_ms": 15.592332987580448,
+            "samples_ms": [
+              13.975875015603378,
+              15.592332987580448,
+              13.812707999022678,
+              13.540542015107349,
+              13.829165982315317
+            ]
+          },
+          "total_median_ms": 255.23704098304734,
+          "selected_mask_index": 2,
+          "rerun_iou_vs_recorded": 1.0,
+          "rerun_equals_recorded": true
+        }
+      }
+    },
+    {
+      "experiment_id": "aau-vap-scene1-00085-thermal",
+      "image_id": "aau-vap-scene1-frame-00085",
+      "modality": "thermal",
+      "image_dimensions": [
+        480,
+        640
+      ],
+      "prompt_xywh": [
+        120,
+        20,
+        450,
+        460
+      ],
+      "classical": {
+        "median_ms": 4.172292014118284,
+        "min_ms": 3.841875004582107,
+        "max_ms": 4.353374999482185,
+        "samples_ms": [
+          4.353374999482185,
+          3.841875004582107,
+          3.971458994783461,
+          4.172292014118284,
+          4.203958000289276
+        ]
+      },
+      "classical_matches_frozen_mask": true,
+      "sam2": {
+        "mps": {
+          "encode": {
+            "median_ms": 100.09645798709244,
+            "min_ms": 99.96216700528748,
+            "max_ms": 100.99025000818074,
+            "samples_ms": [
+              100.48574997927062,
+              100.02354098833166,
+              99.96216700528748,
+              100.99025000818074,
+              100.09645798709244
+            ]
+          },
+          "decode": {
+            "median_ms": 6.488457991508767,
+            "min_ms": 6.469165993621573,
+            "max_ms": 6.562958005815744,
+            "samples_ms": [
+              6.488457991508767,
+              6.562958005815744,
+              6.469165993621573,
+              6.512416002806276,
+              6.481707998318598
+            ]
+          },
+          "total_median_ms": 106.5849159786012,
+          "selected_mask_index": 2,
+          "rerun_iou_vs_recorded": 1.0,
+          "rerun_equals_recorded": true
+        },
+        "cpu": {
+          "encode": {
+            "median_ms": 238.7823750032112,
+            "min_ms": 230.6815419869963,
+            "max_ms": 248.4747919952497,
+            "samples_ms": [
+              245.22095901193097,
+              233.453291002661,
+              230.6815419869963,
+              238.7823750032112,
+              248.4747919952497
+            ]
+          },
+          "decode": {
+            "median_ms": 13.729582977248356,
+            "min_ms": 13.459250010782853,
+            "max_ms": 15.355250012362376,
+            "samples_ms": [
+              15.355250012362376,
+              13.729582977248356,
+              13.459250010782853,
+              14.10045800730586,
+              13.704332988709211
+            ]
+          },
+          "total_median_ms": 252.51195798045956,
+          "selected_mask_index": 2,
+          "rerun_iou_vs_recorded": 1.0,
+          "rerun_equals_recorded": true
+        }
+      }
+    },
+    {
+      "experiment_id": "aau-vap-scene1-00135-rgb",
+      "image_id": "aau-vap-scene1-frame-00135",
+      "modality": "rgb",
+      "image_dimensions": [
+        480,
+        640
+      ],
+      "prompt_xywh": [
+        80,
+        80,
+        350,
+        400
+      ],
+      "classical": {
+        "median_ms": 745.4540409962647,
+        "min_ms": 727.6976669963915,
+        "max_ms": 755.8858330012299,
+        "samples_ms": [
+          730.8567080181092,
+          745.4540409962647,
+          727.6976669963915,
+          753.9749589923304,
+          755.8858330012299
+        ]
+      },
+      "classical_matches_frozen_mask": true,
+      "sam2": {
+        "mps": {
+          "encode": {
+            "median_ms": 100.0378750031814,
+            "min_ms": 99.72658299375325,
+            "max_ms": 101.10545900533907,
+            "samples_ms": [
+              99.72658299375325,
+              100.50462500657886,
+              100.00687499996275,
+              101.10545900533907,
+              100.0378750031814
+            ]
+          },
+          "decode": {
+            "median_ms": 6.109583016950637,
+            "min_ms": 5.926124984398484,
+            "max_ms": 6.331583019345999,
+            "samples_ms": [
+              6.109583016950637,
+              5.926124984398484,
+              5.966791999526322,
+              6.154957984108478,
+              6.331583019345999
+            ]
+          },
+          "total_median_ms": 106.14745802013204,
+          "selected_mask_index": 2,
+          "rerun_iou_vs_recorded": 1.0,
+          "rerun_equals_recorded": true
+        },
+        "cpu": {
+          "encode": {
+            "median_ms": 241.53370800195262,
+            "min_ms": 236.1295419977978,
+            "max_ms": 259.226290974766,
+            "samples_ms": [
+              248.37554100668058,
+              236.1295419977978,
+              239.77375001413748,
+              241.53370800195262,
+              259.226290974766
+            ]
+          },
+          "decode": {
+            "median_ms": 13.952167006209493,
+            "min_ms": 13.53450000169687,
+            "max_ms": 14.081083005294204,
+            "samples_ms": [
+              14.081083005294204,
+              13.993582979310304,
+              13.952167006209493,
+              13.53450000169687,
+              13.681874988833442
+            ]
+          },
+          "total_median_ms": 255.4858750081621,
+          "selected_mask_index": 2,
+          "rerun_iou_vs_recorded": 1.0,
+          "rerun_equals_recorded": true
+        }
+      }
+    },
+    {
+      "experiment_id": "aau-vap-scene1-00135-thermal",
+      "image_id": "aau-vap-scene1-frame-00135",
+      "modality": "thermal",
+      "image_dimensions": [
+        480,
+        640
+      ],
+      "prompt_xywh": [
+        80,
+        80,
+        350,
+        400
+      ],
+      "classical": {
+        "median_ms": 4.024207999464124,
+        "min_ms": 3.817625023657456,
+        "max_ms": 4.339667008025572,
+        "samples_ms": [
+          4.324375011492521,
+          3.8985419960226864,
+          4.339667008025572,
+          3.817625023657456,
+          4.024207999464124
+        ]
+      },
+      "classical_matches_frozen_mask": true,
+      "sam2": {
+        "mps": {
+          "encode": {
+            "median_ms": 101.37304200907238,
+            "min_ms": 99.76516698952764,
+            "max_ms": 106.69287500786595,
+            "samples_ms": [
+              101.12333300639875,
+              99.76516698952764,
+              101.37304200907238,
+              106.69287500786595,
+              104.2442089819815
+            ]
+          },
+          "decode": {
+            "median_ms": 6.42741599585861,
+            "min_ms": 6.302541994955391,
+            "max_ms": 6.7052500089630485,
+            "samples_ms": [
+              6.38687500031665,
+              6.655542005319148,
+              6.7052500089630485,
+              6.302541994955391,
+              6.42741599585861
+            ]
+          },
+          "total_median_ms": 107.80045800493099,
+          "selected_mask_index": 2,
+          "rerun_iou_vs_recorded": 1.0,
+          "rerun_equals_recorded": true
+        },
+        "cpu": {
+          "encode": {
+            "median_ms": 241.05916699045338,
+            "min_ms": 236.09987500822172,
+            "max_ms": 261.1408750235569,
+            "samples_ms": [
+              261.1408750235569,
+              246.5815410250798,
+              241.05916699045338,
+              239.87695798859932,
+              236.09987500822172
+            ]
+          },
+          "decode": {
+            "median_ms": 14.217582996934652,
+            "min_ms": 13.937708019511774,
+            "max_ms": 14.43545799702406,
+            "samples_ms": [
+              14.43545799702406,
+              14.343208982609212,
+              14.217582996934652,
+              13.937708019511774,
+              14.118457998847589
+            ]
+          },
+          "total_median_ms": 255.27674998738803,
+          "selected_mask_index": 2,
+          "rerun_iou_vs_recorded": 1.0,
+          "rerun_equals_recorded": true
+        }
+      }
+    },
+    {
+      "experiment_id": "aau-vap-scene1-00185-rgb",
+      "image_id": "aau-vap-scene1-frame-00185",
+      "modality": "rgb",
+      "image_dimensions": [
+        480,
+        640
+      ],
+      "prompt_xywh": [
+        50,
+        60,
+        350,
+        420
+      ],
+      "classical": {
+        "median_ms": 831.2234999903012,
+        "min_ms": 793.1963340088259,
+        "max_ms": 859.9799590010662,
+        "samples_ms": [
+          831.2234999903012,
+          859.9799590010662,
+          830.6610829895362,
+          835.6327919755131,
+          793.1963340088259
+        ]
+      },
+      "classical_matches_frozen_mask": true,
+      "sam2": {
+        "mps": {
+          "encode": {
+            "median_ms": 100.8360419946257,
+            "min_ms": 100.73812498012558,
+            "max_ms": 101.49641701718792,
+            "samples_ms": [
+              101.49641701718792,
+              100.76170900720172,
+              100.8360419946257,
+              100.85025001899339,
+              100.73812498012558
+            ]
+          },
+          "decode": {
+            "median_ms": 6.5214160131290555,
+            "min_ms": 6.167167011881247,
+            "max_ms": 6.864249997306615,
+            "samples_ms": [
+              6.7982919863425195,
+              6.5214160131290555,
+              6.864249997306615,
+              6.373249983880669,
+              6.167167011881247
+            ]
+          },
+          "total_median_ms": 107.35745800775476,
+          "selected_mask_index": 2,
+          "rerun_iou_vs_recorded": 1.0,
+          "rerun_equals_recorded": true
+        },
+        "cpu": {
+          "encode": {
+            "median_ms": 238.495416007936,
+            "min_ms": 227.39562499918975,
+            "max_ms": 249.17779199313372,
+            "samples_ms": [
+              235.55379098979756,
+              249.17779199313372,
+              240.7860409875866,
+              227.39562499918975,
+              238.495416007936
+            ]
+          },
+          "decode": {
+            "median_ms": 14.654792001238093,
+            "min_ms": 14.11487499717623,
+            "max_ms": 16.998417006107047,
+            "samples_ms": [
+              14.501875004498288,
+              14.654792001238093,
+              14.11487499717623,
+              16.998417006107047,
+              15.530957985902205
+            ]
+          },
+          "total_median_ms": 253.1502080091741,
+          "selected_mask_index": 2,
+          "rerun_iou_vs_recorded": 1.0,
+          "rerun_equals_recorded": true
+        }
+      }
+    },
+    {
+      "experiment_id": "aau-vap-scene1-00185-thermal",
+      "image_id": "aau-vap-scene1-frame-00185",
+      "modality": "thermal",
+      "image_dimensions": [
+        480,
+        640
+      ],
+      "prompt_xywh": [
+        50,
+        60,
+        350,
+        420
+      ],
+      "classical": {
+        "median_ms": 3.829124994808808,
+        "min_ms": 3.730124997673556,
+        "max_ms": 4.172749991994351,
+        "samples_ms": [
+          3.909333987394348,
+          4.172749991994351,
+          3.730124997673556,
+          3.799458994762972,
+          3.829124994808808
+        ]
+      },
+      "classical_matches_frozen_mask": true,
+      "sam2": {
+        "mps": {
+          "encode": {
+            "median_ms": 100.6111669994425,
+            "min_ms": 100.13045801315457,
+            "max_ms": 104.05037499731407,
+            "samples_ms": [
+              104.05037499731407,
+              100.6111669994425,
+              100.13045801315457,
+              100.4152089881245,
+              101.46291597629897
+            ]
+          },
+          "decode": {
+            "median_ms": 6.055000005289912,
+            "min_ms": 5.994125007418916,
+            "max_ms": 6.098417012253776,
+            "samples_ms": [
+              6.098417012253776,
+              5.994125007418916,
+              6.0707079828716815,
+              6.051042000763118,
+              6.055000005289912
+            ]
+          },
+          "total_median_ms": 106.66616700473242,
+          "selected_mask_index": 2,
+          "rerun_iou_vs_recorded": 1.0,
+          "rerun_equals_recorded": true
+        },
+        "cpu": {
+          "encode": {
+            "median_ms": 237.69266600720584,
+            "min_ms": 230.579042021418,
+            "max_ms": 245.91120798140764,
+            "samples_ms": [
+              241.91320801037364,
+              232.36454199650325,
+              230.579042021418,
+              237.69266600720584,
+              245.91120798140764
+            ]
+          },
+          "decode": {
+            "median_ms": 14.130333991488442,
+            "min_ms": 13.820666004903615,
+            "max_ms": 18.62583399633877,
+            "samples_ms": [
+              13.820666004903615,
+              18.62583399633877,
+              18.1877079885453,
+              14.130333991488442,
+              13.982292002765462
+            ]
+          },
+          "total_median_ms": 251.82299999869429,
+          "selected_mask_index": 2,
+          "rerun_iou_vs_recorded": 1.0,
+          "rerun_equals_recorded": true
+        }
+      }
+    }
+  ]
+}

@@ -5,7 +5,9 @@ the runner and artifact exporter are **implemented**; the automated tests and ar
 consistency checks are **tested**; the six fixed AAU VAP cases below are **experimentally
 validated** only for this dataset subset and procedure; the six official SAM2 reference runs are
 **experimentally validated** only for this fixed prompt/model/device procedure.
-No generalization, timing, or RGB-versus-thermal superiority claim is made.
+Processing times for both methods were measured on one host for the same six cases and are
+reported only as host-specific measurements. No generalization or RGB-versus-thermal
+superiority claim is made.
 
 ## Dataset, provenance, and selection
 
@@ -68,7 +70,7 @@ whether alignment occurred. Identity and orientation metadata are checked before
 
 The allowed reference types are `ground_truth`, `sam2_reference`, and `user_reference`. They are
 provenance labels, not interchangeable inference methods. Phase 4 records could label a
-user-supplied mask as `sam2_reference`; Phase 5 adds an isolated optional official SAM2 adapter.
+user-supplied mask as `sam2_reference`; Phase 5 adds the official SAM2 adapter, isolated from the classical code because SAM2 is deep learning.
 A completed Phase 5 SAM2 row records the model, config, checkpoint identifier, device, prompt,
 native-score selection rule, and source identity. SAM2 is still a reference segmentation, not
 ground truth.
@@ -205,7 +207,8 @@ The existing Phase 8 dataset-ground-truth records remain unchanged. SAM2 masks a
 `sam2_reference`, not `ground_truth`. Thermal SAM2 input is a rendered false-color RGB
 representation and does not imply calibrated temperature understanding. Complete provenance,
 native scores, prompts, masks, comparisons, and metrics are in the SAM2 records and
-`docs/SAM2_COMPARISON.md`.
+`docs/SAM2_COMPARISON.md`. Measured processing times for both methods, and a rerun check that
+both reproduce every recorded mask, are in `results/metrics/phase8_timing_summary.md`.
 
 Phase 5's isolated SAM2 adapter, Phase 6's Fourier Parts A–F theory, and Phase 7's Streamlit
 integration remain implemented/tested components. They are not substitutes for Phase 8's real

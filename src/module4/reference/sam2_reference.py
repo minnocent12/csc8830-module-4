@@ -1,7 +1,7 @@
-"""Optional, isolated adapter for the official Meta SAM 2 image predictor.
+"""Isolated adapter for the official Meta SAM 2 image predictor (the assignment's comparison method).
 
-The adapter imports SAM2 and PyTorch lazily. The required classical application therefore remains
-usable without either optional dependency, a checkpoint, or a supported accelerator. A completed
+The adapter imports SAM2 and PyTorch lazily. The classical application therefore remains
+usable without either deep-learning dependency, a checkpoint, or a supported accelerator. A completed
 result contains only a canonical boolean mask and auditable metadata; model and tensor objects do
 not cross this module's public boundary.
 """
@@ -230,7 +230,7 @@ def _inference_context(torch: Any, device: str) -> Iterator[None]:
 
 
 def check_sam2_availability(config: SAM2Config = SAM2Config()) -> SAM2ReferenceResult:
-    """Check optional dependency/checkpoint/device readiness without running inference."""
+    """Check SAM2 dependency/checkpoint/device readiness without running inference."""
     if not config.checkpoint_path:
         return _result(config, status="unavailable", error="SAM2 checkpoint path was not supplied")
     checkpoint = Path(config.checkpoint_path).expanduser()

@@ -8,6 +8,7 @@ import cv2
 import numpy as np
 import streamlit as st
 
+from module4.contours import draw_contours_on_bgr, extract_external_contours
 from module4.fourier import (
     apply_frequency_filter,
     compute_fft2,
@@ -27,6 +28,9 @@ from module4.io_utils import (
 from module4.metrics import evaluate_masks
 from module4.reference import (
     bgr_to_sam2_rgb,
+    find_recorded_sam2_case,
+    load_sam2_records,
+    load_timing_records,
     run_sam2_reference,
     thermal_to_sam2_rgb,
 )
@@ -67,7 +71,14 @@ from module4.webapp.ui import (
     bundled_sample_notice,
     pending_experiment_banner,
 )
-from module4.visualization import bgr_to_rgb, display_mask, mask_overlap_bgr, to_display_uint8
+from module4.visualization import (
+    SAM2_BOUNDARY_BGR,
+    bgr_to_rgb,
+    boundary_comparison_bgr,
+    display_mask,
+    mask_overlap_bgr,
+    to_display_uint8,
+)
 
 _MODULE = "Module 4"
 _REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -249,10 +260,27 @@ def _rgb_page() -> None:
     for warning in result.warnings:
         st.warning(warning)
 
+    _sam2_comparison_section(
+        image=image_bgr,
+        modality="rgb",
+        display_bgr=image_bgr,
+        classical_mask=result.final_mask,
+        prompt_roi=ROI(x, y, roi_width, roi_height),
+        source_name=source_name,
+    )
+
     section_header("Interpretation")
+    st.markdown(
+        "GrabCut labels as foreground whatever inside the box it cannot separate from the person "
+        "by color, so cabinet, table, and wall pixels inside the ROI often remain. In the SAM2 "
+        "comparison this shows as a large red (classical only) area: high recall against SAM2, "
+        "low precision. "
+        "SAM2 follows the body outline closely but usually returns only the most prominent "
+        "person in the box."
+    )
     st.caption(
-        "Use Comparison and Evaluation to upload a reference and compute validated IoU, Dice, "
-        "precision, recall, and confusion counts."
+        "Comparison and Evaluation lists all recorded SAM2 comparisons and processing times, and "
+        "evaluates any uploaded reference mask."
     )
 
 
@@ -455,17 +483,194 @@ def _thermal_page() -> None:
     for warning in result.warnings:
         st.warning(warning)
 
+    _sam2_comparison_section(
+        image=image,
+        modality="thermal",
+        display_bgr=result.source_display_bgr,
+        classical_mask=result.final_mask,
+        prompt_roi=roi,
+        source_name=source_name,
+    )
+
     section_header("Interpretation")
     st.markdown(
         "Both bright and dark foreground hypotheses are evaluated; the selected polarity is a "
-        "transparent classical choice, not an assumption that the person is hotter."
+        "transparent classical choice, not an assumption that the person is hotter. On the "
+        "recorded dataset frames the ROI-assisted score selected the dark hypothesis, which is "
+        "mostly background, while the people are clearly bright. The SAM2 comparison exposes "
+        "this directly: SAM2 outlines the bright people and agrees with the dataset ground "
+        "truth, and the classical mask barely overlaps it."
     )
     st.caption(
-        "Use Comparison and Evaluation to upload a reference and compute validated pixel-level "
-        "metrics. The saved experiment records contain six fixed real-data classical and official "
-        "SAM2 reference comparisons; the optional SAM2 runtime still requires its isolated "
-        "environment and local checkpoint. Fourier theory is available on the Fourier Theory page."
+        "Comparison and Evaluation lists all recorded SAM2 comparisons and processing times, and "
+        "evaluates any uploaded reference mask. Fourier theory is on the Fourier Theory page."
     )
+
+
+_SAM2_ROLE = (
+    "SAM2 (Segment Anything Model 2) is the comparison method the assignment requires. It is a "
+    "deep-learning model, so it is used only to compare against; it never feeds the classical "
+    "OpenCV pipeline above."
+)
+
+
+def _resolve_sam2_mask(
+    image: np.ndarray, modality: str, prompt_roi: ROI | None, source_name: str
+) -> tuple[np.ndarray, str, Path | None] | None:
+    """Return (SAM2 mask, provenance text, ground-truth path) for this image, or None.
+
+    A recorded official SAM2 output is used when this image is pixel-identical to a recorded
+    dataset frame. Otherwise SAM2 runs live when its runtime and checkpoint are installed on
+    this host. If neither is possible the reason is shown and no mask or metric is invented.
+    """
+    recorded = find_recorded_sam2_case(image, modality, _REPO_ROOT)
+    if recorded is not None:
+        prompt = recorded.prompt
+        provenance = (
+            f"Official SAM2 output recorded for this exact frame ({recorded.image_id}): "
+            f"{recorded.model_name}, box prompt x={prompt.x}, y={prompt.y}, width={prompt.width}, "
+            f"height={prompt.height}, mask chosen by the highest SAM2 score "
+            f"(candidate {recorded.selected_mask_index}). This box is also the classical ROI "
+            "predefined for this frame before any comparison (the default above). Rerunning SAM2 on this frame reproduces "
+            "the mask pixel for pixel."
+        )
+        return recorded.mask, provenance, recorded.ground_truth_path
+
+    if prompt_roi is None:
+        st.info(
+            "SAM2 is prompted with the same box as the classical pipeline. Enable the ROI above "
+            "to give SAM2 a box prompt for this image."
+        )
+        return None
+    config = SAM2Config(checkpoint_path=os.environ.get("MODULE4_SAM2_CHECKPOINT") or None)
+    sam2_input = bgr_to_sam2_rgb(image) if modality == "rgb" else thermal_to_sam2_rgb(image)
+    result = run_sam2_reference(
+        sam2_input, SAM2Prompt(*prompt_roi.as_tuple()), config=config, source_image_id=source_name
+    )
+    if result.status == "failed":
+        st.error(f"**SAM2 run failed; no SAM2 comparison was generated.** {result.error}")
+        return None
+    if result.status != "completed" or result.mask is None:
+        st.info(
+            "**SAM2 cannot run on this host for an uploaded image.** SAM2 needs PyTorch and a "
+            "model checkpoint, which the public web deployment does not install. The SAM2 "
+            "comparison is shown for the bundled dataset frame (remove the upload), and all "
+            "recorded SAM2 results are on the Comparison and Evaluation page. "
+            f"Detail: {result.error or result.status}."
+        )
+        return None
+    provenance = (
+        f"SAM2 run live on this image: {result.model_name} on {result.device}, box prompt "
+        f"{result.prompt}, mask chosen by the highest SAM2 score (candidate {result.selected_mask_index})."
+    )
+    return result.mask, provenance, None
+
+
+def _sam2_comparison_section(
+    *,
+    image: np.ndarray,
+    modality: str,
+    display_bgr: np.ndarray,
+    classical_mask: np.ndarray,
+    prompt_roi: ROI | None,
+    source_name: str,
+) -> None:
+    """Render the per-image comparison of the classical result with SAM2 (assignment items 6 and 7)."""
+    section_header(
+        "Comparison with SAM2",
+        description="The classical OpenCV result above compared with SAM2 segmentation of the same image.",
+    )
+    st.caption(_SAM2_ROLE)
+    resolved = _resolve_sam2_mask(image, modality, prompt_roi, source_name)
+    if resolved is None:
+        return
+    sam2_mask, provenance, ground_truth_path = resolved
+    st.caption(provenance)
+
+    st.markdown("**Boundaries**")
+    image_gallery(
+        [
+            ImageItem(
+                bgr_to_rgb(draw_contours_on_bgr(display_bgr, extract_external_contours(classical_mask))),
+                caption="Classical OpenCV boundary (red)",
+            ),
+            ImageItem(
+                bgr_to_rgb(
+                    draw_contours_on_bgr(
+                        display_bgr, extract_external_contours(sam2_mask), color=SAM2_BOUNDARY_BGR
+                    )
+                ),
+                caption="SAM2 boundary (cyan)",
+            ),
+            ImageItem(
+                bgr_to_rgb(boundary_comparison_bgr(display_bgr, classical_mask, sam2_mask)),
+                caption="Both boundaries: classical red, SAM2 cyan",
+            ),
+        ],
+        max_columns=3,
+        bordered=False,
+    )
+    metrics = evaluate_masks(classical_mask, sam2_mask)
+    st.markdown("**Agreement of the classical mask (A) with the SAM2 mask (B)**")
+    metric_row(
+        [
+            ("IoU", f"{metrics.iou:.4f}"),
+            ("Dice", f"{metrics.dice:.4f}"),
+            ("Precision", f"{metrics.precision:.4f}"),
+            ("Recall", f"{metrics.recall:.4f}"),
+        ]
+    )
+    image_comparison(
+        ImageItem(display_mask(sam2_mask), caption="SAM2 mask"),
+        ImageItem(
+            bgr_to_rgb(mask_overlap_bgr(classical_mask, sam2_mask)),
+            caption="Overlap: green both, red classical only, blue SAM2 only",
+        ),
+        bordered=False,
+    )
+    st.write(
+        f"Extra region (classical foreground that SAM2 calls background): {metrics.fp} pixels. "
+        f"Missing region (SAM2 foreground that the classical mask lacks): {metrics.fn} pixels."
+    )
+
+    if ground_truth_path is None:
+        return
+    try:
+        truth = prepare_reference(
+            load_image_unchanged(ground_truth_path),
+            expected_shape=classical_mask.shape,
+            reference_status="available",
+            reference_type="ground_truth",
+            image_id=source_name,
+            reference_image_id=source_name,
+        ).mask
+    except (ReferenceValidationError, TypeError, ValueError) as exc:
+        st.error(f"The dataset ground-truth mask could not be validated: {exc}")
+        return
+    if truth is not None:
+        rows = []
+        for method, prediction, reference, label in (
+            ("Classical OpenCV", classical_mask, truth, "dataset ground truth"),
+            ("SAM2", sam2_mask, truth, "dataset ground truth"),
+            ("Classical OpenCV", classical_mask, sam2_mask, "SAM2"),
+        ):
+            scores = evaluate_masks(prediction, reference)
+            rows.append(
+                {
+                    "Method": method,
+                    "Compared with": label,
+                    "IoU": round(scores.iou, 4),
+                    "Dice": round(scores.dice, 4),
+                    "Precision": round(scores.precision, 4),
+                    "Recall": round(scores.recall, 4),
+                }
+            )
+        st.markdown("**Both methods scored against the dataset ground truth**")
+        data_table(rows, hide_index=True)
+        st.caption(
+            "The dataset ground-truth mask labels every person in the frame. SAM2 is not ground "
+            "truth; it is the comparison method."
+        )
 
 
 def _sam2_prompt_controls(width: int, height: int, classical_roi: ROI | None) -> SAM2Prompt | None:
@@ -510,8 +715,8 @@ def _sam2_prompt_controls(width: int, height: int, classical_roi: ROI | None) ->
 
 
 def _sam2_configuration() -> SAM2Config:
-    """Collect optional SAM2 settings without making them base-application requirements."""
-    with st.expander("Optional SAM2 runtime configuration"):
+    """Collect live SAM2 settings without making PyTorch a base-application requirement."""
+    with st.expander("SAM2 runtime configuration"):
         model_name = st.selectbox(
             "SAM2 model",
             ["sam2.1_hiera_tiny", "sam2.1_hiera_small", "sam2.1_hiera_base_plus", "sam2.1_hiera_large"],
@@ -669,9 +874,85 @@ def _mark_reference_image_id_edited() -> None:
 
 
 _COMPARISON_INTRO = (
-    "Compare a completed classical mask with an uploaded reference mask or optional SAM2 "
-    "reference segmentation. Validation precedes overlap visualization and metrics."
+    "Compare the classical OpenCV results with SAM2 and with dataset ground truth. The recorded "
+    "results for every fixed RGB and thermal case come first; below, any image can be "
+    "evaluated against SAM2 or an uploaded reference mask."
 )
+
+
+def _frame_label(image_id: str) -> str:
+    return image_id.rsplit("-", 1)[-1]
+
+
+def _recorded_sam2_results() -> None:
+    """Show every recorded classical-vs-SAM2 comparison and the measured processing cost."""
+    records = load_sam2_records(_REPO_ROOT)
+    section_header(
+        "SAM2 Comparison Results",
+        description=(
+            "Official SAM2 runs on the fixed dataset frames, each prompted with the same box that "
+            "was predefined for the classical pipeline. Both methods are also scored against the "
+            "dataset ground truth."
+        ),
+    )
+    if not records:
+        pending_experiment_banner("No recorded SAM2 comparison is available in this installation.")
+        return
+    rows = []
+    for record in records:
+        comparisons = record["comparisons"]
+        for method, compared_with, scores in (
+            ("Classical OpenCV", "ground truth", record["dataset_ground_truth"]["metrics_for_frozen_classical"]),
+            ("SAM2", "ground truth", comparisons["sam2_vs_dataset_ground_truth"]),
+            ("Classical OpenCV", "SAM2", comparisons["classical_vs_sam2"]),
+        ):
+            rows.append(
+                {
+                    "Frame": _frame_label(record["image_id"]),
+                    "Modality": record["modality"].upper(),
+                    "Method": method,
+                    "Compared with": compared_with,
+                    "IoU": round(scores["iou"], 4),
+                    "Dice": round(scores["dice"], 4),
+                    "Precision": round(scores["precision"], 4),
+                    "Recall": round(scores["recall"], 4),
+                }
+            )
+    data_table(rows, hide_index=True)
+    st.caption(
+        "Precision and recall treat the second mask as the reference. Classical vs SAM2 on RGB: "
+        "recall near 1 and precision near 0.3 mean the classical mask contains the SAM2 person "
+        "plus a large background region. Thermal: the classical pipeline selected the dark "
+        "(background) hypothesis, so it barely overlaps SAM2 or the ground truth."
+    )
+
+    timing = load_timing_records(_REPO_ROOT)
+    st.markdown("**Processing complexity (measured)**")
+    if timing is None:
+        pending_experiment_banner("Processing times have not been measured in this installation.")
+        return
+    devices = list(timing["sam2_model_load_ms"])
+    timing_rows = []
+    for case in timing["cases"]:
+        row = {
+            "Frame": _frame_label(case["image_id"]),
+            "Modality": case["modality"].upper(),
+            "Classical OpenCV, CPU (ms)": round(case["classical"]["median_ms"], 1),
+        }
+        for device in devices:
+            row[f"SAM2, {device.upper()} (ms)"] = round(case["sam2"][device]["total_median_ms"], 1)
+        timing_rows.append(row)
+    data_table(timing_rows, hide_index=True)
+    host = timing["host"]
+    load = ", ".join(f"{device.upper()} {value:.0f} ms" for device, value in timing["sam2_model_load_ms"].items())
+    st.caption(
+        f"Median of {timing['repeats']} timed runs after a warm-up, on {host['machine']} "
+        f"({host['platform']}). SAM2 time is image encoding plus box decoding; loading the model "
+        f"once costs {load}. SAM2.1 Hiera Tiny has {timing['sam2_parameter_count']:,} learned "
+        f"parameters ({timing['checkpoint_size_bytes'] / 1e6:.0f} MB of weights) and needs "
+        "PyTorch; the classical pipelines have no learned parameters. Thermal Otsu takes a few "
+        "milliseconds, while iterative GrabCut is the slowest step measured."
+    )
 
 
 def _comparison_page() -> None:
@@ -680,9 +961,11 @@ def _comparison_page() -> None:
         eyebrow=_MODULE,
         description=_COMPARISON_INTRO,
     )
+    _recorded_sam2_results()
+
     st.caption(
-        "Expected input: RGB or thermal image, plus an optional binary reference or optional "
-        "SAM2 configuration."
+        "Expected input: RGB or thermal image, plus SAM2 or a binary reference mask as the "
+        "comparison."
     )
     st.caption(
         "Flow: classical mask → reference mask → validation → overlap visualization → "
@@ -948,11 +1231,11 @@ def _comparison_page() -> None:
                 )
         elif reference_source == "SAM2 reference":
             st.info(
-                "**SAM2 reference segmentation (optional).** SAM2 is an optional reference "
-                "segmentation, not ground truth. It never changes the classical prediction. A "
-                "real SAM2 reference requires the separate official SAM2 environment and a local "
-                "checkpoint; without them the run reports SAM2 as unavailable and generates no "
-                "metrics."
+                "**SAM2 reference segmentation.** SAM2 is the comparison method, not ground "
+                "truth, and it never changes the classical prediction. Running SAM2 live needs "
+                "PyTorch and a local model checkpoint. Where they are not installed, a recorded "
+                "dataset frame uses its recorded official SAM2 output; any other image reports "
+                "SAM2 as unavailable and generates no metrics."
             )
             with parameter_group(
                 "SAM2 box prompt",
@@ -1015,6 +1298,36 @@ def _comparison_page() -> None:
         except (TypeError, ValueError) as exc:
             st.error(f"**SAM2 reference: Failed.** SAM2 reference could not be prepared; metrics were not generated: {exc}")
             return
+        recorded = (
+            find_recorded_sam2_case(source, modality, _REPO_ROOT)
+            if sam2_result.status == "unavailable"
+            else None
+        )
+        if recorded is not None:
+            prompt = recorded.prompt
+            st.caption(
+                "SAM2 cannot run live on this host, and this image is a recorded dataset frame, "
+                "so its recorded official SAM2 output is used. That run used the box "
+                f"x={prompt.x}, y={prompt.y}, width={prompt.width}, height={prompt.height}, not "
+                "the box entered above."
+            )
+            st.write(
+                f"Model: **{recorded.model_name}** | official commit: "
+                f"**{recorded.implementation_version or 'not recorded'}** | device: "
+                f"**{recorded.device or 'not recorded'}** | selected candidate: "
+                f"**{recorded.selected_mask_index}** (highest SAM2 score)"
+            )
+            _show_metrics(
+                result.final_mask,
+                recorded.mask,
+                reference_label="SAM2 reference segmentation",
+                reference_origin="recorded official SAM2 run on this frame",
+                alignment=None,
+            )
+            section_header("Interpretation")
+            st.markdown(_METRIC_DEFINITIONS)
+            st.markdown("Metrics compare the classical mask with the SAM2 reference segmentation; no ground-truth claim is made.")
+            return
         if sam2_result.status != "completed" or sam2_result.mask is None:
             if sam2_result.status == "failed":
                 st.error(
@@ -1025,7 +1338,7 @@ def _comparison_page() -> None:
                 st.warning(
                     f"**SAM2 reference: Unavailable.** SAM2 reference is {sam2_result.status}; metrics "
                     f"were not generated. "
-                    f"{sam2_result.error or 'Configure the optional official SAM2 environment and checkpoint.'}"
+                    f"{sam2_result.error or 'Install the official SAM2 environment and checkpoint to run SAM2 live.'}"
                     "\n\nNo placeholder mask or metrics were generated. To evaluate the classical "
                     "prediction without SAM2, choose Uploaded reference mask as the reference source."
                 )
@@ -1118,7 +1431,8 @@ def _comparison_page() -> None:
     st.markdown(_METRIC_DEFINITIONS)
     st.markdown(
         "All metrics use aligned canonical masks. A reference is metadata/provenance input, not a "
-        "segmentation input; SAM2 is optional and Fourier analysis is provided on its separate theory page."
+        "segmentation input. The recorded SAM2 comparison is at the top of this page, and Fourier "
+        "analysis is on its separate theory page."
     )
 
 

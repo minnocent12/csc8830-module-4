@@ -103,7 +103,9 @@ def test_header_is_canonical_and_shown_once(page: AppTest) -> None:
 
 
 def test_sections_follow_the_workflow(page: AppTest) -> None:
-    assert [s.value for s in page.subheader] == ["Input", "Processing Results", "Interpretation"]
+    assert [s.value for s in page.subheader] == [
+        "Input", "Processing Results", "Comparison with SAM2", "Interpretation",
+    ]
     markdown = [m.value for m in page.markdown]
     assert "#### Configuration" in markdown
     assert markdown.index("**Processing sequence**") < markdown.index("**Final mask and boundary**")
@@ -125,6 +127,11 @@ def test_page_shows_exactly_what_grabcut_computes(page: AppTest) -> None:
         "Morphology-cleaned foreground candidate",
         "Final classical RGB mask",
         "Boundary overlay derived from final mask",
+        "Classical OpenCV boundary (red)",
+        "SAM2 boundary (cyan)",
+        "Both boundaries: classical red, SAM2 cyan",
+        "SAM2 mask",
+        "Overlap: green both, red classical only, blue SAM2 only",
     ]
 
 
